@@ -19,6 +19,7 @@ Implemented today:
 - gRPC contracts for jobs, executions, retry policy, and worker streaming
 - generated Go protobuf/grpc stubs checked into `gen/go`
 - gRPC server bootstrap with reflection and standard health endpoints
+- containerized service packaging with Docker Compose and Kustomize-based Kubernetes manifests
 - in-memory control-plane flow for:
   - `SubmitJob`
   - `GetJob`
@@ -82,10 +83,26 @@ The scheduler logic lives under `internal/application/scheduler` and works again
 - execution failure either schedules a new attempt with exponential backoff or transitions to a terminal dead-lettered state
 - execution history is visible through `ListExecutions`
 
+### Local Platform
+
+The repository now includes a local platform layer for both containerized development and Kubernetes deployment shape.
+
+- a single multi-stage `Dockerfile` builds any service binary through the `SERVICE` build arg
+- `docker-compose.yml` packages the three services for local container execution
+- `deploy/base` defines reusable Kubernetes resources with Kustomize
+- `deploy/overlays/dev` defines the `kind`-oriented development environment
+- `deploy/kind/cluster.yaml` exposes NodePorts for local access to the control-plane and worker-gateway
+
+Current limitation:
+
+- the services still use in-memory state, so a multi-container or multi-pod deployment is deployment-shaped rather than functionally integrated
+- until shared persistence is added, the control-plane and scheduler do not observe the same job store across process boundaries
+
 ## Repository Layout
 
 ```text
 cmd/                  service entrypoints
+deploy/               Kubernetes base, overlays, and kind config
 gen/go/               generated protobuf and gRPC stubs
 internal/application/ application use cases
 internal/platform/    shared runtime, config, and gRPC server helpers
@@ -120,3 +137,20 @@ make proto-breaking
 ```
 
 The protobuf toolchain runs in Docker so local `protoc` or `buf` installation is not required.
+
+Container workflow:
+
+```bash
+make compose-config
+make compose-up
+make compose-down
+```
+
+Kubernetes workflow:
+
+```bash
+make k8s-render
+make k8s-validate
+make kind-up
+make kind-down
+```

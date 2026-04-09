@@ -1,0 +1,42 @@
+services:
+  control-plane:
+    image: ghcr.io/gnix0/task-orchestrator-control-plane:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: control-plane
+    environment:
+      APP_ENV: compose
+      LOG_LEVEL: debug
+      GRPC_PORT: "8080"
+      SHUTDOWN_TIMEOUT_SECONDS: "10"
+    ports:
+      - "8080:8080"
+
+  scheduler:
+    image: ghcr.io/gnix0/task-orchestrator-scheduler:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: scheduler
+    environment:
+      APP_ENV: compose
+      LOG_LEVEL: debug
+      SHUTDOWN_TIMEOUT_SECONDS: "10"
+
+  worker-gateway:
+    image: ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: worker-gateway
+    environment:
+      APP_ENV: compose
+      LOG_LEVEL: debug
+      GRPC_PORT: "8080"
+      SHUTDOWN_TIMEOUT_SECONDS: "10"
+    ports:
+      - "8081:8080"

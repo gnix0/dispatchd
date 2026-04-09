@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - configmap.yaml
+  - serviceaccount.yaml
+  - control-plane-deployment.yaml
+  - control-plane-service.yaml
+  - scheduler-deployment.yaml
+  - worker-gateway-deployment.yaml
+  - worker-gateway-service.yaml
+  - networkpolicy.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/part-of: task-orchestrator
