@@ -11,7 +11,11 @@ import (
 	"github.com/gnix0/task-orchestrator/internal/version"
 )
 
-func Run(logger *slog.Logger, serviceConfig config.Service) {
+func SignalContext() (context.Context, context.CancelFunc) {
+	return signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+}
+
+func LogBootstrap(logger *slog.Logger, serviceConfig config.Service) {
 	logger.Info(
 		"service bootstrapped",
 		slog.String("service", serviceConfig.Name),
@@ -19,20 +23,23 @@ func Run(logger *slog.Logger, serviceConfig config.Service) {
 		slog.String("version", version.Version),
 		slog.String("commit", version.Commit),
 	)
+}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	<-ctx.Done()
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), serviceConfig.ShutdownTimeout)
-	defer cancel()
-
+func LogStopping(logger *slog.Logger, serviceConfig config.Service) {
 	logger.Info(
 		"service stopping",
 		slog.String("service", serviceConfig.Name),
 		slog.String("timeout", serviceConfig.ShutdownTimeout.String()),
 	)
+}
 
-	<-shutdownCtx.Done()
+func Run(logger *slog.Logger, serviceConfig config.Service) {
+	LogBootstrap(logger, serviceConfig)
+
+	ctx, stop := SignalContext()
+	defer stop()
+
+	<-ctx.Done()
+
+	LogStopping(logger, serviceConfig)
 }

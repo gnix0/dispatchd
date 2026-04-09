@@ -4,42 +4,58 @@ package taskorchestrator.v1;
 
 option go_package = "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1;taskorchestratorv1";
 
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
 service JobService {
   rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
   rpc CancelJob(CancelJobRequest) returns (CancelJobResponse);
   rpc GetJob(GetJobRequest) returns (GetJobResponse);
+  rpc ListExecutions(ListExecutionsRequest) returns (ListExecutionsResponse);
 }
 
 service WorkerService {
   rpc Connect(stream ConnectRequest) returns (stream ConnectResponse);
 }
 
-service HealthService {
-  rpc Check(CheckRequest) returns (CheckResponse);
-}
-
 message SubmitJobRequest {
   string job_type = 1;
   bytes payload = 2;
+  int32 priority = 3;
+  string idempotency_key = 4;
+  map<string, string> metadata = 5;
+  RetryPolicy retry_policy = 6;
 }
 
 message SubmitJobResponse {
-  string job_id = 1;
+  Job job = 1;
 }
 
 message CancelJobRequest {
   string job_id = 1;
 }
 
-message CancelJobResponse {}
+message CancelJobResponse {
+  Job job = 1;
+}
 
 message GetJobRequest {
   string job_id = 1;
 }
 
 message GetJobResponse {
+  Job job = 1;
+}
+
+message ListExecutionsRequest {
   string job_id = 1;
-  string status = 2;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListExecutionsResponse {
+  repeated Execution executions = 1;
+  string next_page_token = 2;
 }
 
 message ConnectRequest {
@@ -47,40 +63,117 @@ message ConnectRequest {
     WorkerRegistration registration = 1;
     WorkerHeartbeat heartbeat = 2;
     TaskResult result = 3;
+    TaskLogChunk log_chunk = 4;
   }
 }
 
 message ConnectResponse {
   oneof payload {
     TaskAssignment assignment = 1;
+    WorkerAck ack = 2;
+    DrainSignal drain_signal = 3;
   }
+}
+
+message Job {
+  string job_id = 1;
+  string job_type = 2;
+  bytes payload = 3;
+  JobStatus status = 4;
+  int32 priority = 5;
+  string idempotency_key = 6;
+  map<string, string> metadata = 7;
+  RetryPolicy retry_policy = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message Execution {
+  string execution_id = 1;
+  string job_id = 2;
+  int32 attempt = 3;
+  ExecutionStatus status = 4;
+  string worker_id = 5;
+  string error_message = 6;
+  google.protobuf.Timestamp claimed_at = 7;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp finished_at = 9;
+}
+
+message RetryPolicy {
+  int32 max_attempts = 1;
+  google.protobuf.Duration initial_backoff = 2;
+  google.protobuf.Duration max_backoff = 3;
 }
 
 message WorkerRegistration {
   string worker_id = 1;
   repeated string capabilities = 2;
+  int32 max_concurrency = 3;
+  map<string, string> labels = 4;
 }
 
 message WorkerHeartbeat {
   string worker_id = 1;
+  WorkerStatus status = 2;
+  int32 inflight_executions = 3;
 }
 
 message TaskAssignment {
   string execution_id = 1;
   string job_type = 2;
   bytes payload = 3;
+  int32 attempt = 4;
+  google.protobuf.Timestamp lease_expires_at = 5;
 }
 
 message TaskResult {
   string execution_id = 1;
   bool success = 2;
   string error_message = 3;
+  map<string, string> metadata = 4;
 }
 
-message CheckRequest {
-  string service = 1;
+message TaskLogChunk {
+  string execution_id = 1;
+  string message = 2;
+  google.protobuf.Timestamp emitted_at = 3;
 }
 
-message CheckResponse {
-  string status = 1;
+message WorkerAck {
+  string execution_id = 1;
+  string worker_id = 2;
+  string message = 3;
+}
+
+message DrainSignal {
+  string reason = 1;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_PENDING = 1;
+  JOB_STATUS_DISPATCHING = 2;
+  JOB_STATUS_RUNNING = 3;
+  JOB_STATUS_SUCCEEDED = 4;
+  JOB_STATUS_FAILED = 5;
+  JOB_STATUS_CANCELED = 6;
+}
+
+enum ExecutionStatus {
+  EXECUTION_STATUS_UNSPECIFIED = 0;
+  EXECUTION_STATUS_QUEUED = 1;
+  EXECUTION_STATUS_CLAIMED = 2;
+  EXECUTION_STATUS_RUNNING = 3;
+  EXECUTION_STATUS_SUCCEEDED = 4;
+  EXECUTION_STATUS_FAILED = 5;
+  EXECUTION_STATUS_DEAD_LETTERED = 6;
+}
+
+enum WorkerStatus {
+  WORKER_STATUS_UNSPECIFIED = 0;
+  WORKER_STATUS_READY = 1;
+  WORKER_STATUS_BUSY = 2;
+  WORKER_STATUS_DRAINING = 3;
+  WORKER_STATUS_OFFLINE = 4;
 }
