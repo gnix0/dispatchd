@@ -1,6 +1,6 @@
 module github.com/gnix0/task-orchestrator
 
-go 1.25.7
+go 1.25
 
 require (
 	google.golang.org/grpc v1.80.0

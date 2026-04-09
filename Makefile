@@ -4,10 +4,12 @@ CONTROL_PLANE_IMAGE := ghcr.io/gnix0/task-orchestrator-control-plane:dev
 SCHEDULER_IMAGE := ghcr.io/gnix0/task-orchestrator-scheduler:dev
 WORKER_GATEWAY_IMAGE := ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
 KIND_CLUSTER_NAME ?= task-orchestrator
+IMAGE_TAG ?= dev
 
 .PHONY: fmt fmt-check lint test build proto proto-check proto-breaking \
 	docker-build-control-plane docker-build-scheduler docker-build-worker-gateway \
-	compose-config compose-up compose-down k8s-render k8s-validate kind-up kind-down
+	compose-config compose-up compose-down k8s-render k8s-validate argocd-render \
+	kind-up kind-down gitops-update-dev
 
 fmt:
 	go fmt ./...
@@ -55,7 +57,13 @@ k8s-render:
 	kubectl kustomize deploy/overlays/dev
 
 k8s-validate:
-	kubectl apply --dry-run=client -k deploy/overlays/dev
+	kubectl kustomize deploy/overlays/dev >/dev/null
+
+argocd-render:
+	kubectl kustomize deploy/argocd
+
+gitops-update-dev:
+	./scripts/update-dev-image-tags.sh "$(IMAGE_TAG)"
 
 kind-up:
 	./scripts/kind-up.sh
