@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package taskorchestrator.v1;
+
+option go_package = "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1;taskorchestratorv1";
+
+service JobService {
+  rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse);
+  rpc GetJob(GetJobRequest) returns (GetJobResponse);
+}
+
+service WorkerService {
+  rpc Connect(stream ConnectRequest) returns (stream ConnectResponse);
+}
+
+service HealthService {
+  rpc Check(CheckRequest) returns (CheckResponse);
+}
+
+message SubmitJobRequest {
+  string job_type = 1;
+  bytes payload = 2;
+}
+
+message SubmitJobResponse {
+  string job_id = 1;
+}
+
+message CancelJobRequest {
+  string job_id = 1;
+}
+
+message CancelJobResponse {}
+
+message GetJobRequest {
+  string job_id = 1;
+}
+
+message GetJobResponse {
+  string job_id = 1;
+  string status = 2;
+}
+
+message ConnectRequest {
+  oneof payload {
+    WorkerRegistration registration = 1;
+    WorkerHeartbeat heartbeat = 2;
+    TaskResult result = 3;
+  }
+}
+
+message ConnectResponse {
+  oneof payload {
+    TaskAssignment assignment = 1;
+  }
+}
+
+message WorkerRegistration {
+  string worker_id = 1;
+  repeated string capabilities = 2;
+}
+
+message WorkerHeartbeat {
+  string worker_id = 1;
+}
+
+message TaskAssignment {
+  string execution_id = 1;
+  string job_type = 2;
+  bytes payload = 3;
+}
+
+message TaskResult {
+  string execution_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message CheckRequest {
+  string service = 1;
+}
+
+message CheckResponse {
+  string status = 1;
+}
