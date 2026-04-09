@@ -81,3 +81,31 @@ func TestIdempotencyConflictMapsToAlreadyExists(t *testing.T) {
 		t.Fatalf("expected AlreadyExists, got %v", status.Code(err))
 	}
 }
+
+func TestListExecutionsReturnsPersistedExecution(t *testing.T) {
+	jobApplication := jobs.NewInMemoryService()
+	service := &JobService{jobApplication: jobApplication}
+
+	submitResponse, err := service.SubmitJob(context.Background(), &taskorchestratorv1.SubmitJobRequest{
+		JobType: "email.send",
+		Payload: []byte("payload"),
+	})
+	if err != nil {
+		t.Fatalf("expected submit to succeed, got %v", err)
+	}
+
+	listResponse, err := service.ListExecutions(context.Background(), &taskorchestratorv1.ListExecutionsRequest{
+		JobId: submitResponse.GetJob().GetJobId(),
+	})
+	if err != nil {
+		t.Fatalf("expected list executions to succeed, got %v", err)
+	}
+
+	if len(listResponse.GetExecutions()) != 1 {
+		t.Fatalf("expected one execution, got %d", len(listResponse.GetExecutions()))
+	}
+
+	if listResponse.GetExecutions()[0].GetStatus() != taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_QUEUED {
+		t.Fatalf("expected queued execution status, got %v", listResponse.GetExecutions()[0].GetStatus())
+	}
+}

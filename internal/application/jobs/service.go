@@ -14,13 +14,26 @@ import (
 )
 
 const (
-	StatusPending  Status = "pending"
-	StatusCanceled Status = "canceled"
+	StatusPending     Status = "pending"
+	StatusDispatching Status = "dispatching"
+	StatusSucceeded   Status = "succeeded"
+	StatusFailed      Status = "failed"
+	StatusCanceled    Status = "canceled"
+)
+
+const (
+	ExecutionStatusQueued       = "queued"
+	ExecutionStatusClaimed      = "claimed"
+	ExecutionStatusRunning      = "running"
+	ExecutionStatusSucceeded    = "succeeded"
+	ExecutionStatusFailed       = "failed"
+	ExecutionStatusDeadLettered = "dead_lettered"
 )
 
 var (
 	ErrInvalidArgument     = errors.New("invalid argument")
 	ErrJobNotFound         = errors.New("job not found")
+	ErrExecutionNotFound   = errors.New("execution not found")
 	ErrIdempotencyConflict = errors.New("idempotency key already used with different request")
 )
 
@@ -47,15 +60,17 @@ type Job struct {
 }
 
 type Execution struct {
-	ID           string
-	JobID        string
-	Attempt      int32
-	Status       string
-	WorkerID     string
-	ErrorMessage string
-	ClaimedAt    *time.Time
-	StartedAt    *time.Time
-	FinishedAt   *time.Time
+	ID             string
+	JobID          string
+	Attempt        int32
+	Status         string
+	WorkerID       string
+	ErrorMessage   string
+	ClaimedAt      *time.Time
+	StartedAt      *time.Time
+	FinishedAt     *time.Time
+	AvailableAt    time.Time
+	LeaseExpiresAt *time.Time
 }
 
 type SubmitJobInput struct {
@@ -74,20 +89,31 @@ type Service interface {
 	ListExecutions(context.Context, string) ([]Execution, error)
 }
 
+type SchedulerStore interface {
+	ClaimNextRunnable(context.Context, time.Duration) (Execution, Job, bool, error)
+	MarkExecutionFailed(context.Context, string, string) (Execution, *Execution, Job, error)
+}
+
 type InMemoryService struct {
-	mu             sync.RWMutex
-	jobsByID       map[string]Job
-	jobIDByIdemKey map[string]string
-	now            func() time.Time
-	newID          func() string
+	mu                  sync.RWMutex
+	jobsByID            map[string]Job
+	jobIDByIdemKey      map[string]string
+	executionsByID      map[string]Execution
+	executionIDsByJobID map[string][]string
+	now                 func() time.Time
+	newJobID            func() string
+	newExecutionID      func() string
 }
 
 func NewInMemoryService() *InMemoryService {
 	return &InMemoryService{
-		jobsByID:       make(map[string]Job),
-		jobIDByIdemKey: make(map[string]string),
-		now:            time.Now,
-		newID:          newJobID,
+		jobsByID:            make(map[string]Job),
+		jobIDByIdemKey:      make(map[string]string),
+		executionsByID:      make(map[string]Execution),
+		executionIDsByJobID: make(map[string][]string),
+		now:                 time.Now,
+		newJobID:            newJobID,
+		newExecutionID:      newExecutionID,
 	}
 }
 
@@ -115,7 +141,7 @@ func (s *InMemoryService) SubmitJob(_ context.Context, input SubmitJobInput) (Jo
 
 	now := s.now().UTC()
 	job := Job{
-		ID:                 s.newID(),
+		ID:                 s.newJobID(),
 		JobType:            normalized.JobType,
 		Payload:            append([]byte(nil), normalized.Payload...),
 		Status:             StatusPending,
@@ -128,10 +154,20 @@ func (s *InMemoryService) SubmitJob(_ context.Context, input SubmitJobInput) (Jo
 		requestFingerprint: fingerprint,
 	}
 
+	initialExecution := Execution{
+		ID:          s.newExecutionID(),
+		JobID:       job.ID,
+		Attempt:     1,
+		Status:      ExecutionStatusQueued,
+		AvailableAt: now,
+	}
+
 	s.jobsByID[job.ID] = job
 	if job.IdempotencyKey != "" {
 		s.jobIDByIdemKey[job.IdempotencyKey] = job.ID
 	}
+	s.executionsByID[initialExecution.ID] = initialExecution
+	s.executionIDsByJobID[job.ID] = append(s.executionIDsByJobID[job.ID], initialExecution.ID)
 
 	return cloneJob(job), nil
 }
@@ -189,7 +225,136 @@ func (s *InMemoryService) ListExecutions(_ context.Context, jobID string) ([]Exe
 		return nil, ErrJobNotFound
 	}
 
-	return []Execution{}, nil
+	executionIDs := s.executionIDsByJobID[trimmedJobID]
+	executions := make([]Execution, 0, len(executionIDs))
+	for _, executionID := range executionIDs {
+		executions = append(executions, cloneExecution(s.executionsByID[executionID]))
+	}
+
+	sort.Slice(executions, func(i, j int) bool {
+		if executions[i].Attempt == executions[j].Attempt {
+			return executions[i].AvailableAt.Before(executions[j].AvailableAt)
+		}
+
+		return executions[i].Attempt < executions[j].Attempt
+	})
+
+	return executions, nil
+}
+
+func (s *InMemoryService) ClaimNextRunnable(_ context.Context, leaseDuration time.Duration) (Execution, Job, bool, error) {
+	if leaseDuration <= 0 {
+		return Execution{}, Job{}, false, fmt.Errorf("%w: lease duration must be greater than zero", ErrInvalidArgument)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := s.now().UTC()
+	var candidateExecution Execution
+	var candidateJob Job
+	found := false
+
+	for _, execution := range s.executionsByID {
+		if execution.Status != ExecutionStatusQueued {
+			continue
+		}
+
+		if execution.AvailableAt.After(now) {
+			continue
+		}
+
+		job := s.jobsByID[execution.JobID]
+		if job.Status == StatusCanceled || job.Status == StatusFailed || job.Status == StatusSucceeded {
+			continue
+		}
+
+		if !found || isHigherPriorityCandidate(job, execution, candidateJob, candidateExecution) {
+			candidateExecution = execution
+			candidateJob = job
+			found = true
+		}
+	}
+
+	if !found {
+		return Execution{}, Job{}, false, nil
+	}
+
+	claimedAt := now
+	leaseExpiresAt := now.Add(leaseDuration)
+
+	candidateExecution.Status = ExecutionStatusClaimed
+	candidateExecution.ClaimedAt = &claimedAt
+	candidateExecution.StartedAt = &claimedAt
+	candidateExecution.LeaseExpiresAt = &leaseExpiresAt
+
+	candidateJob.Status = StatusDispatching
+	candidateJob.UpdatedAt = now
+
+	s.executionsByID[candidateExecution.ID] = candidateExecution
+	s.jobsByID[candidateJob.ID] = candidateJob
+
+	return cloneExecution(candidateExecution), cloneJob(candidateJob), true, nil
+}
+
+func (s *InMemoryService) MarkExecutionFailed(_ context.Context, executionID, errorMessage string) (Execution, *Execution, Job, error) {
+	trimmedExecutionID := strings.TrimSpace(executionID)
+	if trimmedExecutionID == "" {
+		return Execution{}, nil, Job{}, fmt.Errorf("%w: execution_id is required", ErrInvalidArgument)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	execution, ok := s.executionsByID[trimmedExecutionID]
+	if !ok {
+		return Execution{}, nil, Job{}, ErrExecutionNotFound
+	}
+
+	if execution.Status != ExecutionStatusClaimed {
+		return Execution{}, nil, Job{}, fmt.Errorf("%w: execution must be claimed before failure handling", ErrInvalidArgument)
+	}
+
+	job := s.jobsByID[execution.JobID]
+	now := s.now().UTC()
+	trimmedError := strings.TrimSpace(errorMessage)
+	if trimmedError == "" {
+		trimmedError = "execution failed"
+	}
+
+	execution.ErrorMessage = trimmedError
+	execution.FinishedAt = &now
+
+	var nextExecution *Execution
+	if execution.Attempt >= job.RetryPolicy.MaxAttempts {
+		execution.Status = ExecutionStatusDeadLettered
+		job.Status = StatusFailed
+	} else {
+		execution.Status = ExecutionStatusFailed
+		retryExecution := Execution{
+			ID:          s.newExecutionID(),
+			JobID:       job.ID,
+			Attempt:     execution.Attempt + 1,
+			Status:      ExecutionStatusQueued,
+			AvailableAt: now.Add(retryDelay(job.RetryPolicy, execution.Attempt+1)),
+		}
+		s.executionsByID[retryExecution.ID] = retryExecution
+		s.executionIDsByJobID[job.ID] = append(s.executionIDsByJobID[job.ID], retryExecution.ID)
+		nextExecution = &retryExecution
+		job.Status = StatusPending
+	}
+
+	job.UpdatedAt = now
+	s.executionsByID[execution.ID] = execution
+	s.jobsByID[job.ID] = job
+
+	clonedJob := cloneJob(job)
+	if nextExecution == nil {
+		return cloneExecution(execution), nil, clonedJob, nil
+	}
+
+	clonedNextExecution := cloneExecution(*nextExecution)
+	return cloneExecution(execution), &clonedNextExecution, clonedJob, nil
 }
 
 func normalizeSubmitInput(input SubmitJobInput) (SubmitJobInput, error) {
@@ -252,6 +417,22 @@ func normalizeRetryPolicy(policy RetryPolicy) (RetryPolicy, error) {
 	return policy, nil
 }
 
+func retryDelay(policy RetryPolicy, nextAttempt int32) time.Duration {
+	delay := policy.InitialBackoff
+	for attempt := int32(2); attempt < nextAttempt; attempt++ {
+		if delay >= policy.MaxBackoff {
+			return policy.MaxBackoff
+		}
+
+		delay *= 2
+		if delay > policy.MaxBackoff {
+			return policy.MaxBackoff
+		}
+	}
+
+	return delay
+}
+
 func buildFingerprint(input SubmitJobInput) string {
 	hash := sha256.New()
 	hash.Write([]byte(input.JobType))
@@ -275,10 +456,47 @@ func buildFingerprint(input SubmitJobInput) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
+func isHigherPriorityCandidate(job Job, execution Execution, currentJob Job, currentExecution Execution) bool {
+	if job.Priority != currentJob.Priority {
+		return job.Priority > currentJob.Priority
+	}
+
+	if !execution.AvailableAt.Equal(currentExecution.AvailableAt) {
+		return execution.AvailableAt.Before(currentExecution.AvailableAt)
+	}
+
+	if !job.CreatedAt.Equal(currentJob.CreatedAt) {
+		return job.CreatedAt.Before(currentJob.CreatedAt)
+	}
+
+	return execution.Attempt < currentExecution.Attempt
+}
+
 func cloneJob(job Job) Job {
 	job.Payload = append([]byte(nil), job.Payload...)
 	job.Metadata = cloneMetadata(job.Metadata)
 	return job
+}
+
+func cloneExecution(execution Execution) Execution {
+	if execution.ClaimedAt != nil {
+		claimedAt := *execution.ClaimedAt
+		execution.ClaimedAt = &claimedAt
+	}
+	if execution.StartedAt != nil {
+		startedAt := *execution.StartedAt
+		execution.StartedAt = &startedAt
+	}
+	if execution.FinishedAt != nil {
+		finishedAt := *execution.FinishedAt
+		execution.FinishedAt = &finishedAt
+	}
+	if execution.LeaseExpiresAt != nil {
+		leaseExpiresAt := *execution.LeaseExpiresAt
+		execution.LeaseExpiresAt = &leaseExpiresAt
+	}
+
+	return execution
 }
 
 func cloneMetadata(metadata map[string]string) map[string]string {
@@ -301,4 +519,13 @@ func newJobID() string {
 	}
 
 	return "job_" + hex.EncodeToString(raw[:])
+}
+
+func newExecutionID() string {
+	var raw [16]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		panic(err)
+	}
+
+	return "exec_" + hex.EncodeToString(raw[:])
 }
