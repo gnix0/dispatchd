@@ -107,16 +107,18 @@ func toProtoExecution(execution jobs.Execution) *taskorchestratorv1.Execution {
 	}
 
 	switch execution.Status {
-	case "queued":
+	case jobs.ExecutionStatusQueued:
 		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_QUEUED
-	case "claimed":
+	case jobs.ExecutionStatusClaimed:
 		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_CLAIMED
-	case "running":
+	case jobs.ExecutionStatusRunning:
 		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_RUNNING
-	case "succeeded":
+	case jobs.ExecutionStatusSucceeded:
 		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_SUCCEEDED
-	case "failed":
+	case jobs.ExecutionStatusFailed:
 		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_FAILED
+	case jobs.ExecutionStatusDeadLettered:
+		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_DEAD_LETTERED
 	default:
 		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED
 	}
@@ -138,6 +140,12 @@ func toProtoJobStatus(status jobs.Status) taskorchestratorv1.JobStatus {
 	switch status {
 	case jobs.StatusPending:
 		return taskorchestratorv1.JobStatus_JOB_STATUS_PENDING
+	case jobs.StatusDispatching:
+		return taskorchestratorv1.JobStatus_JOB_STATUS_DISPATCHING
+	case jobs.StatusSucceeded:
+		return taskorchestratorv1.JobStatus_JOB_STATUS_SUCCEEDED
+	case jobs.StatusFailed:
+		return taskorchestratorv1.JobStatus_JOB_STATUS_FAILED
 	case jobs.StatusCanceled:
 		return taskorchestratorv1.JobStatus_JOB_STATUS_CANCELED
 	default:

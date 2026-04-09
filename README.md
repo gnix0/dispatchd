@@ -23,8 +23,9 @@ Implemented today:
   - `SubmitJob`
   - `GetJob`
   - `CancelJob`
-  - `ListExecutions` returning an empty list until execution persistence exists
+  - `ListExecutions` returning in-memory execution history
 - in-memory worker registration and heartbeat flow over the gRPC stream
+- in-memory scheduler polling and retry/dead-letter behavior
 - request validation for required fields and retry policy shape
 - idempotency-key handling on job submission
 
@@ -73,6 +74,13 @@ The worker gateway uses the in-memory worker service under `internal/application
 - registration records worker identity, capabilities, labels, and concurrency
 - heartbeats update worker status and inflight execution count
 - the stream returns acknowledgement frames for successful registration and heartbeat messages
+
+The scheduler logic lives under `internal/application/scheduler` and works against the in-memory job store.
+
+- job submission creates an initial queued execution
+- the scheduler polling loop claims runnable executions using a lease duration
+- execution failure either schedules a new attempt with exponential backoff or transitions to a terminal dead-lettered state
+- execution history is visible through `ListExecutions`
 
 ## Repository Layout
 
