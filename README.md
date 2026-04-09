@@ -24,6 +24,7 @@ Implemented today:
   - `GetJob`
   - `CancelJob`
   - `ListExecutions` returning an empty list until execution persistence exists
+- in-memory worker registration and heartbeat flow over the gRPC stream
 - request validation for required fields and retry policy shape
 - idempotency-key handling on job submission
 
@@ -66,6 +67,12 @@ The first real use case is the in-memory job service under `internal/application
 - query and cancellation operate against the same in-memory store
 
 This gives the control-plane a real execution path without forcing early database choices.
+
+The worker gateway uses the in-memory worker service under `internal/application/workers`.
+
+- registration records worker identity, capabilities, labels, and concurrency
+- heartbeats update worker status and inflight execution count
+- the stream returns acknowledgement frames for successful registration and heartbeat messages
 
 ## Repository Layout
 
