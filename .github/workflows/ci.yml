@@ -1,4 +1,4 @@
-name: ci
+name: quality
 
 on:
   push:
@@ -39,3 +39,12 @@ jobs:
 
       - name: Check protobuf generation
         run: make proto-check
+
+      - name: Validate compose configuration
+        run: make compose-config
+
+      - name: Render Kubernetes manifests
+        run: make k8s-validate
+
+      - name: Render Argo CD manifests
+        run: make argocd-render

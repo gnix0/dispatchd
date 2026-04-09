@@ -1,0 +1,118 @@
+name: security
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  sast-codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: go
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+
+  sca-govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+
+  secret-leak-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  repo-security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+  container-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - control-plane
+          - scheduler
+          - worker-gateway
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build local image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            SERVICE=${{ matrix.service }}
+          load: true
+          tags: local/task-orchestrator-${{ matrix.service }}:scan
+
+      - name: Scan container image with Trivy
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          scan-type: image
+          image-ref: local/task-orchestrator-${{ matrix.service }}:scan
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1

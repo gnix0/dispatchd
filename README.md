@@ -1,144 +1,130 @@
 # task-orchestrator
 
-Distributed task orchestration platform in Go built around gRPC contracts, containerized protobuf tooling, and a Kubernetes-ready delivery path.
+Distributed task orchestration platform in Go built around gRPC contracts, containerized delivery, Kustomize-based GitOps, and an Argo CD deployment path.
 
-## What It Is
+## Architecture
 
-The system is designed around three runtime roles:
+The system is organized around three runtime roles:
 
 - `control-plane`: accepts job submissions and exposes query APIs
-- `scheduler`: claims runnable work, applies retry policy, and coordinates dispatch
-- `worker-gateway`: manages bidirectional worker streams for assignment, heartbeats, and task results
+- `scheduler`: claims runnable executions, applies retry policy, and decides terminal failure
+- `worker-gateway`: manages bidirectional worker streams for registration, heartbeats, and task feedback
 
-The current implementation focuses on the control-plane path so the API surface and transport layer can be exercised before persistence and scheduling are introduced.
+The core domain model is centered on `Job` and `Execution` records:
 
-## Current Behavior
+- a submitted job creates an initial queued execution
+- the scheduler claims runnable executions with a lease window
+- failed executions are retried with bounded exponential backoff
+- jobs transition to a terminal dead-letter path after the retry policy is exhausted
 
-Implemented today:
-
-- gRPC contracts for jobs, executions, retry policy, and worker streaming
-- generated Go protobuf/grpc stubs checked into `gen/go`
-- gRPC server bootstrap with reflection and standard health endpoints
-- containerized service packaging with Docker Compose and Kustomize-based Kubernetes manifests
-- in-memory control-plane flow for:
-  - `SubmitJob`
-  - `GetJob`
-  - `CancelJob`
-  - `ListExecutions` returning in-memory execution history
-- in-memory worker registration and heartbeat flow over the gRPC stream
-- in-memory scheduler polling and retry/dead-letter behavior
-- request validation for required fields and retry policy shape
-- idempotency-key handling on job submission
-
-Current submit-flow semantics:
-
-- `job_type` and `payload` are required
-- `priority` must be `>= 0`
-- if no retry policy is supplied, defaults are applied
-- the same idempotency key with the same request returns the existing job
-- the same idempotency key with a different request returns a conflict
-
-## How It Works
+## Runtime Model
 
 ### Contracts
 
-The protobuf module under `proto/` defines the external system contract. The control-plane uses `JobService`, while worker lifecycle behavior is defined on `WorkerService`.
+The protobuf module under `proto/` defines the external system contract.
+
+- `JobService` exposes submission, cancellation, lookup, and execution history
+- `WorkerService` defines the worker stream protocol
+- generated protobuf and gRPC stubs are committed under `gen/go`
 
 Key message families:
 
-- `Job`: submitted work plus retry policy and metadata
-- `Execution`: runtime attempt records for a job
-- `RetryPolicy`: max attempts and backoff configuration
-- `ConnectRequest` / `ConnectResponse`: streaming worker protocol
+- `Job`: submitted work, metadata, priority, and retry policy
+- `Execution`: an individual attempt for a job
+- `RetryPolicy`: max attempts plus backoff configuration
+- `ConnectRequest` / `ConnectResponse`: worker registration, heartbeat, and acknowledgement stream frames
 
 ### Transport
 
 The gRPC transport layer lives under `internal/transport/grpcapi`.
 
-- request messages are mapped into application inputs
-- application errors are translated into gRPC status codes
-- health and reflection are registered centrally in the shared gRPC server bootstrap
+- request payloads are mapped into application-layer inputs
+- application errors are translated into explicit gRPC status codes
+- reflection and standard gRPC health services are registered centrally
 
-### Application Layer
+### Application Services
 
-The first real use case is the in-memory job service under `internal/application/jobs`.
+The application layer lives under `internal/application/`.
 
-- jobs are stored in-process
-- submission normalizes and validates input
-- a request fingerprint is used to enforce idempotency-key consistency
-- query and cancellation operate against the same in-memory store
+- `jobs`: job creation, idempotency, execution tracking, and scheduler-facing execution state transitions
+- `scheduler`: polling, claiming, retry scheduling, and dead-letter decisions
+- `workers`: worker registration, heartbeat state, capabilities, labels, and concurrency metadata
 
-This gives the control-plane a real execution path without forcing early database choices.
+The current reference runtime uses in-memory state so the orchestration rules stay isolated from persistence concerns. The deployment topology, CI/CD flow, and security controls are production-shaped; replacing the in-memory stores with shared persistence is the next infrastructure-level evolution, not an architectural rewrite.
 
-The worker gateway uses the in-memory worker service under `internal/application/workers`.
+## Platform And Delivery
 
-- registration records worker identity, capabilities, labels, and concurrency
-- heartbeats update worker status and inflight execution count
-- the stream returns acknowledgement frames for successful registration and heartbeat messages
+### Containers
 
-The scheduler logic lives under `internal/application/scheduler` and works against the in-memory job store.
+- a single multi-stage [Dockerfile](/home/gnix0/developer/task-orchestrator/Dockerfile) builds any service binary through the `SERVICE` build argument
+- [docker-compose.yml](/home/gnix0/developer/task-orchestrator/docker-compose.yml) packages the three services for local container execution
 
-- job submission creates an initial queued execution
-- the scheduler polling loop claims runnable executions using a lease duration
-- execution failure either schedules a new attempt with exponential backoff or transitions to a terminal dead-lettered state
-- execution history is visible through `ListExecutions`
+### Kubernetes
 
-### Local Platform
+- [deploy/base](/home/gnix0/developer/task-orchestrator/deploy/base) contains reusable Deployments, Services, ConfigMap, ServiceAccount, and NetworkPolicy resources
+- [deploy/overlays/dev](/home/gnix0/developer/task-orchestrator/deploy/overlays/dev) defines the development overlay used by local `kind` clusters and future GitOps updates
+- [deploy/kind/cluster.yaml](/home/gnix0/developer/task-orchestrator/deploy/kind/cluster.yaml) maps NodePorts for local access to the control-plane and worker-gateway
 
-The repository now includes a local platform layer for both containerized development and Kubernetes deployment shape.
+### GitOps
 
-- a single multi-stage `Dockerfile` builds any service binary through the `SERVICE` build arg
-- `docker-compose.yml` packages the three services for local container execution
-- `deploy/base` defines reusable Kubernetes resources with Kustomize
-- `deploy/overlays/dev` defines the `kind`-oriented development environment
-- `deploy/kind/cluster.yaml` exposes NodePorts for local access to the control-plane and worker-gateway
+- image tags are managed through the Kustomize `images` section in the dev overlay
+- [scripts/update-dev-image-tags.sh](/home/gnix0/developer/task-orchestrator/scripts/update-dev-image-tags.sh) updates the overlay tags for automated GitOps PRs
+- the release workflow publishes images and opens a PR with updated deployment tags instead of mutating manifests directly on the default branch
 
-Current limitation:
+### Argo CD
 
-- the services still use in-memory state, so a multi-container or multi-pod deployment is deployment-shaped rather than functionally integrated
-- until shared persistence is added, the control-plane and scheduler do not observe the same job store across process boundaries
+- [deploy/argocd/dev-application.yaml](/home/gnix0/developer/task-orchestrator/deploy/argocd/dev-application.yaml) defines the dev `Application`
+- [deploy/argocd/project.yaml](/home/gnix0/developer/task-orchestrator/deploy/argocd/project.yaml) defines the Argo CD project boundaries
+- Argo CD targets the `deploy/overlays/dev` path and can self-heal/prune once the repo is connected
+
+If you fork or rename the repository, update the Argo CD `repoURL` fields to match the canonical Git URL for your deployment source.
+
+## DevSecOps
+
+The repository includes a dedicated delivery/security layer:
+
+- `SAST`: CodeQL for static analysis of the Go codebase
+- `SCA`: `govulncheck`, Dependabot, and repository-level Trivy filesystem scanning
+- `Container Scanning`: Trivy image scanning across the service images
+- `Secret Leakage Detection`: Gitleaks plus Trivy secret scanning
+- `DAST`: OWASP ZAP baseline scans against an explicitly provided environment URL
+
+Because the core services expose gRPC rather than a browser-oriented HTTP application surface, DAST is modeled as an environment-level scan against an ingress, gateway, or externally exposed endpoint rather than as a local repo-only check.
 
 ## Repository Layout
 
 ```text
 cmd/                  service entrypoints
-deploy/               Kubernetes base, overlays, and kind config
+deploy/               Kubernetes base, overlays, kind, and Argo CD manifests
 gen/go/               generated protobuf and gRPC stubs
 internal/application/ application use cases
 internal/platform/    shared runtime, config, and gRPC server helpers
 internal/transport/   gRPC handlers and protocol mapping
 proto/                protobuf contracts
-scripts/              developer commands
+scripts/              developer automation helpers
 tools/proto/          Dockerized protobuf toolchain
 ```
 
-## Running It
+## Local Workflows
 
-Core local checks:
+Core validation:
 
 ```bash
 make fmt-check
 make test
 make build
 make lint
-```
-
-Protobuf workflow:
-
-```bash
-make proto
 make proto-check
 ```
 
-Optional compatibility check against the current `main` branch schema baseline:
+Protobuf workflows:
 
 ```bash
+make proto
 make proto-breaking
 ```
 
-The protobuf toolchain runs in Docker so local `protoc` or `buf` installation is not required.
-
-Container workflow:
+Container workflows:
 
 ```bash
 make compose-config
@@ -146,11 +132,20 @@ make compose-up
 make compose-down
 ```
 
-Kubernetes workflow:
+Kubernetes workflows:
 
 ```bash
 make k8s-render
 make k8s-validate
+make argocd-render
 make kind-up
 make kind-down
 ```
+
+GitOps tag update helper:
+
+```bash
+make gitops-update-dev IMAGE_TAG=sha-1234567
+```
+
+The protobuf toolchain runs in Docker, so local `protoc` or `buf` installation is not required.

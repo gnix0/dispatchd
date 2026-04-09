@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: task-orchestrator
+  namespace: argocd
+spec:
+  sourceRepos:
+    - https://github.com/gnix0/task-orchestrator.git
+  destinations:
+    - namespace: task-orchestrator-dev
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

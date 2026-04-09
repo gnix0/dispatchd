@@ -1,0 +1,107 @@
+name: release-gitops
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to publish. Defaults to sha-<short_sha>."
+        required: false
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  publish-images:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - control-plane
+          - scheduler
+          - worker-gateway
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Resolve image tag
+        id: tag
+        env:
+          INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          TAG="${INPUT_IMAGE_TAG}"
+          if [ -z "${TAG}" ]; then
+            if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+              TAG="${GITHUB_REF_NAME}"
+            else
+              TAG="sha-$(printf '%s' "${GITHUB_SHA}" | cut -c1-7)"
+            fi
+          fi
+          echo "value=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            SERVICE=${{ matrix.service }}
+          push: true
+          tags: ghcr.io/gnix0/task-orchestrator-${{ matrix.service }}:${{ steps.tag.outputs.value }}
+
+  open-gitops-pr:
+    needs: publish-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Resolve image tag
+        id: tag
+        env:
+          INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          TAG="${INPUT_IMAGE_TAG}"
+          if [ -z "${TAG}" ]; then
+            if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+              TAG="${GITHUB_REF_NAME}"
+            else
+              TAG="sha-$(printf '%s' "${GITHUB_SHA}" | cut -c1-7)"
+            fi
+          fi
+          echo "value=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update dev overlay image tags
+        run: ./scripts/update-dev-image-tags.sh "${{ steps.tag.outputs.value }}"
+
+      - name: Create GitOps pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: gitops/update-dev-images-${{ steps.tag.outputs.value }}
+          base: main
+          commit-message: "chore: update dev deployment images to ${{ steps.tag.outputs.value }}"
+          title: "chore: update dev deployment images to ${{ steps.tag.outputs.value }}"
+          body: |
+            Updates the development Kustomize overlay to the newly published image tag `${{ steps.tag.outputs.value }}`.
+
+            This PR is intended to be reconciled by the GitOps deployment flow and consumed by Argo CD.
+          labels: |
+            gitops
+            deployment
