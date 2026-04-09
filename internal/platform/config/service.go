@@ -12,6 +12,7 @@ type Service struct {
 	Name            string
 	Environment     string
 	LogLevel        string
+	GRPCPort        int
 	ShutdownTimeout time.Duration
 }
 
@@ -20,8 +21,13 @@ func Load(serviceName string) Service {
 		Name:            serviceName,
 		Environment:     getEnv("APP_ENV", "development"),
 		LogLevel:        getEnv("LOG_LEVEL", "info"),
+		GRPCPort:        getIntEnv("GRPC_PORT", 8080),
 		ShutdownTimeout: getDurationEnv("SHUTDOWN_TIMEOUT_SECONDS", defaultShutdownTimeout),
 	}
+}
+
+func (s Service) GRPCAddress() string {
+	return ":" + strconv.Itoa(s.GRPCPort)
 }
 
 func getEnv(key, fallback string) string {
@@ -45,4 +51,18 @@ func getDurationEnv(key string, fallback time.Duration) time.Duration {
 	}
 
 	return time.Duration(seconds) * time.Second
+}
+
+func getIntEnv(key string, fallback int) int {
+	rawValue := os.Getenv(key)
+	if rawValue == "" {
+		return fallback
+	}
+
+	value, err := strconv.Atoi(rawValue)
+	if err != nil || value <= 0 {
+		return fallback
+	}
+
+	return value
 }

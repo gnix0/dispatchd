@@ -4,15 +4,17 @@ Distributed task orchestration platform built in Go with gRPC, Docker, Kubernete
 
 ## Current Scope
 
-This bootstrap slice establishes:
+The current foundation covers:
 
 - the Go module and service entrypoints
 - a shared runtime/config foundation
-- protobuf contract scaffolding with Dockerized generation
+- refined protobuf contracts for jobs, executions, retries, and worker streams
+- generated Go stubs checked into `gen/go`
+- gRPC server setup with standard health and reflection enabled
 - local development commands through `make`
 - the first GitHub Actions CI workflow
 
-Business behavior, persistence, streaming workers, scheduler loops, and Kubernetes deployment manifests land in follow-up branches.
+Business behavior, persistence, scheduler loops, real worker orchestration, and Kubernetes deployment manifests land in follow-up branches.
 
 ## Planned Services
 
@@ -25,7 +27,9 @@ Business behavior, persistence, streaming workers, scheduler loops, and Kubernet
 ```text
 cmd/                  service entrypoints
 internal/platform/    shared runtime and configuration helpers
+internal/transport/   gRPC transport handlers and registration
 internal/version/     build metadata
+gen/go/               generated protobuf and gRPC stubs
 proto/                protobuf contracts
 scripts/              local developer commands
 tools/proto/          Dockerized protobuf toolchain
@@ -43,6 +47,13 @@ Generate protobuf code with Docker:
 
 ```bash
 make proto
+make proto-check
+```
+
+If you want to compare schema changes against the current `main` branch baseline explicitly, run:
+
+```bash
+make proto-breaking
 ```
 
 The module path is currently `github.com/gnix0/task-orchestrator`. If you publish under a different GitHub namespace later, update `go.mod` and the `go_package` option in the protobuf files before committing generated stubs.

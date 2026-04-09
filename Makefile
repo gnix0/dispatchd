@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: fmt fmt-check lint test build proto proto-check
+.PHONY: fmt fmt-check lint test build proto proto-check proto-breaking
 
 fmt:
 	go fmt ./...
@@ -22,3 +22,6 @@ proto:
 
 proto-check:
 	./scripts/proto.sh check
+
+proto-breaking:
+	./scripts/proto.sh breaking
