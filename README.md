@@ -1,73 +1,107 @@
 # task-orchestrator
 
-Distributed task orchestration platform built in Go with gRPC, Docker, Kubernetes, and GitHub Actions. This repository is structured to grow through small, reviewable branches instead of large one-shot drops.
+Distributed task orchestration platform in Go built around gRPC contracts, containerized protobuf tooling, and a Kubernetes-ready delivery path.
 
-## Current Scope
+## What It Is
 
-The current foundation covers:
+The system is designed around three runtime roles:
 
-- the Go module and service entrypoints
-- a shared runtime/config foundation
-- refined protobuf contracts for jobs, executions, retries, and worker streams
-- generated Go stubs checked into `gen/go`
-- gRPC server setup with standard health and reflection enabled
-- local development commands through `make`
-- the first GitHub Actions CI workflow
+- `control-plane`: accepts job submissions and exposes query APIs
+- `scheduler`: claims runnable work, applies retry policy, and coordinates dispatch
+- `worker-gateway`: manages bidirectional worker streams for assignment, heartbeats, and task results
 
-Business behavior, persistence, scheduler loops, real worker orchestration, and Kubernetes deployment manifests land in follow-up branches.
+The current implementation focuses on the control-plane path so the API surface and transport layer can be exercised before persistence and scheduling are introduced.
 
-## Planned Services
+## Current Behavior
 
-- `control-plane`: public gRPC API for job submission and query flows
-- `scheduler`: execution claiming, retry policy, and dispatch orchestration
-- `worker-gateway`: bidirectional worker stream lifecycle and task delivery
+Implemented today:
+
+- gRPC contracts for jobs, executions, retry policy, and worker streaming
+- generated Go protobuf/grpc stubs checked into `gen/go`
+- gRPC server bootstrap with reflection and standard health endpoints
+- in-memory control-plane flow for:
+  - `SubmitJob`
+  - `GetJob`
+  - `CancelJob`
+  - `ListExecutions` returning an empty list until execution persistence exists
+- request validation for required fields and retry policy shape
+- idempotency-key handling on job submission
+
+Current submit-flow semantics:
+
+- `job_type` and `payload` are required
+- `priority` must be `>= 0`
+- if no retry policy is supplied, defaults are applied
+- the same idempotency key with the same request returns the existing job
+- the same idempotency key with a different request returns a conflict
+
+## How It Works
+
+### Contracts
+
+The protobuf module under `proto/` defines the external system contract. The control-plane uses `JobService`, while worker lifecycle behavior is defined on `WorkerService`.
+
+Key message families:
+
+- `Job`: submitted work plus retry policy and metadata
+- `Execution`: runtime attempt records for a job
+- `RetryPolicy`: max attempts and backoff configuration
+- `ConnectRequest` / `ConnectResponse`: streaming worker protocol
+
+### Transport
+
+The gRPC transport layer lives under `internal/transport/grpcapi`.
+
+- request messages are mapped into application inputs
+- application errors are translated into gRPC status codes
+- health and reflection are registered centrally in the shared gRPC server bootstrap
+
+### Application Layer
+
+The first real use case is the in-memory job service under `internal/application/jobs`.
+
+- jobs are stored in-process
+- submission normalizes and validates input
+- a request fingerprint is used to enforce idempotency-key consistency
+- query and cancellation operate against the same in-memory store
+
+This gives the control-plane a real execution path without forcing early database choices.
 
 ## Repository Layout
 
 ```text
 cmd/                  service entrypoints
-internal/platform/    shared runtime and configuration helpers
-internal/transport/   gRPC transport handlers and registration
-internal/version/     build metadata
 gen/go/               generated protobuf and gRPC stubs
+internal/application/ application use cases
+internal/platform/    shared runtime, config, and gRPC server helpers
+internal/transport/   gRPC handlers and protocol mapping
 proto/                protobuf contracts
-scripts/              local developer commands
+scripts/              developer commands
 tools/proto/          Dockerized protobuf toolchain
 ```
 
-## Quick Start
+## Running It
+
+Core local checks:
 
 ```bash
 make fmt-check
 make test
 make build
+make lint
 ```
 
-Generate protobuf code with Docker:
+Protobuf workflow:
 
 ```bash
 make proto
 make proto-check
 ```
 
-If you want to compare schema changes against the current `main` branch baseline explicitly, run:
+Optional compatibility check against the current `main` branch schema baseline:
 
 ```bash
 make proto-breaking
 ```
 
-The module path is currently `github.com/gnix0/task-orchestrator`. If you publish under a different GitHub namespace later, update `go.mod` and the `go_package` option in the protobuf files before committing generated stubs.
-
-## Branching Strategy
-
-The intended workflow is one focused branch per slice, for example:
-
-1. `feat/bootstrap-foundation`
-2. `feat/protobuf-contracts`
-3. `feat/control-plane-submit-flow`
-4. `feat/worker-stream-foundation`
-5. `feat/scheduler-retry-engine`
-6. `feat/local-platform-k8s`
-7. `feat/ci-release-automation`
-
-Each branch should produce one coherent PR with passing tests and updated docs where needed.
+The protobuf toolchain runs in Docker so local `protoc` or `buf` installation is not required.
