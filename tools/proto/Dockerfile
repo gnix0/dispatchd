@@ -1,4 +1,4 @@
-FROM golang:1.25.7-bookworm
+FROM golang:1.25-bookworm
 
 ARG BUF_VERSION=1.57.0
 
