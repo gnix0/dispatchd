@@ -1,0 +1,12 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: task-orchestrator
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 31080
+        hostPort: 31080
+        protocol: TCP
+      - containerPort: 31081
+        hostPort: 31081
+        protocol: TCP

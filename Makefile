@@ -1,6 +1,13 @@
 SHELL := /bin/sh
 
-.PHONY: fmt fmt-check lint test build proto proto-check proto-breaking
+CONTROL_PLANE_IMAGE := ghcr.io/gnix0/task-orchestrator-control-plane:dev
+SCHEDULER_IMAGE := ghcr.io/gnix0/task-orchestrator-scheduler:dev
+WORKER_GATEWAY_IMAGE := ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
+KIND_CLUSTER_NAME ?= task-orchestrator
+
+.PHONY: fmt fmt-check lint test build proto proto-check proto-breaking \
+	docker-build-control-plane docker-build-scheduler docker-build-worker-gateway \
+	compose-config compose-up compose-down k8s-render k8s-validate kind-up kind-down
 
 fmt:
 	go fmt ./...
@@ -25,3 +32,33 @@ proto-check:
 
 proto-breaking:
 	./scripts/proto.sh breaking
+
+docker-build-control-plane:
+	docker build --build-arg SERVICE=control-plane -t "$(CONTROL_PLANE_IMAGE)" .
+
+docker-build-scheduler:
+	docker build --build-arg SERVICE=scheduler -t "$(SCHEDULER_IMAGE)" .
+
+docker-build-worker-gateway:
+	docker build --build-arg SERVICE=worker-gateway -t "$(WORKER_GATEWAY_IMAGE)" .
+
+compose-config:
+	docker compose config
+
+compose-up:
+	docker compose up --build -d
+
+compose-down:
+	docker compose down --remove-orphans
+
+k8s-render:
+	kubectl kustomize deploy/overlays/dev
+
+k8s-validate:
+	kubectl apply --dry-run=client -k deploy/overlays/dev
+
+kind-up:
+	./scripts/kind-up.sh
+
+kind-down:
+	./scripts/kind-down.sh

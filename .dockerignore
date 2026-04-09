@@ -1,0 +1,8 @@
+.git
+.github
+bin
+coverage.out
+deploy
+dist
+proto/gen
+tmp
