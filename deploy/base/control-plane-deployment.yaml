@@ -14,10 +14,22 @@ spec:
         app.kubernetes.io/component: control-plane
     spec:
       serviceAccountName: task-orchestrator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: control-plane
           image: ghcr.io/gnix0/task-orchestrator-control-plane:dev
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
           envFrom:
             - configMapRef:
                 name: task-orchestrator-config
