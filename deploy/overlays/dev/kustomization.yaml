@@ -10,13 +10,13 @@ resources:
 images:
   - name: ghcr.io/gnix0/dispatchd-control-plane:dev
     newName: ghcr.io/gnix0/dispatchd-control-plane
-    newTag: dev
+    newTag: v0.1.0
   - name: ghcr.io/gnix0/dispatchd-scheduler:dev
     newName: ghcr.io/gnix0/dispatchd-scheduler
-    newTag: dev
+    newTag: v0.1.0
   - name: ghcr.io/gnix0/dispatchd-worker-gateway:dev
     newName: ghcr.io/gnix0/dispatchd-worker-gateway
-    newTag: dev
+    newTag: v0.1.0
 
 configMapGenerator:
   - name: dispatchd-config
