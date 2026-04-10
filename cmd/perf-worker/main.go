@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
+	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
@@ -133,7 +133,7 @@ func runWorker(target string, duration, heartbeatInterval time.Duration, maxConc
 		return result
 	}
 
-	client := taskorchestratorv1.NewWorkerServiceClient(conn)
+	client := dispatchdv1.NewWorkerServiceClient(conn)
 	stream, err := client.Connect(ctx)
 	if err != nil {
 		result.errors++
@@ -146,9 +146,9 @@ func runWorker(target string, duration, heartbeatInterval time.Duration, maxConc
 	}()
 
 	workerID := fmt.Sprintf("perf-worker-%02d", workerIndex)
-	if err := stream.Send(&taskorchestratorv1.ConnectRequest{
-		Payload: &taskorchestratorv1.ConnectRequest_Registration{
-			Registration: &taskorchestratorv1.WorkerRegistration{
+	if err := stream.Send(&dispatchdv1.ConnectRequest{
+		Payload: &dispatchdv1.ConnectRequest_Registration{
+			Registration: &dispatchdv1.WorkerRegistration{
 				WorkerId:       workerID,
 				Capabilities:   []string{"perf-heartbeat"},
 				MaxConcurrency: int32(maxConcurrency),
@@ -173,11 +173,11 @@ func runWorker(target string, duration, heartbeatInterval time.Duration, maxConc
 	deadline := time.Now().Add(duration)
 	for time.Now().Before(deadline) {
 		started := time.Now()
-		if err := stream.Send(&taskorchestratorv1.ConnectRequest{
-			Payload: &taskorchestratorv1.ConnectRequest_Heartbeat{
-				Heartbeat: &taskorchestratorv1.WorkerHeartbeat{
+		if err := stream.Send(&dispatchdv1.ConnectRequest{
+			Payload: &dispatchdv1.ConnectRequest_Heartbeat{
+				Heartbeat: &dispatchdv1.WorkerHeartbeat{
 					WorkerId:           workerID,
-					Status:             taskorchestratorv1.WorkerStatus_WORKER_STATUS_READY,
+					Status:             dispatchdv1.WorkerStatus_WORKER_STATUS_READY,
 					InflightExecutions: 0,
 				},
 			},
@@ -200,7 +200,7 @@ func runWorker(target string, duration, heartbeatInterval time.Duration, maxConc
 	return result
 }
 
-func waitForAck(stream taskorchestratorv1.WorkerService_ConnectClient, workerID string) (*taskorchestratorv1.WorkerAck, int, error) {
+func waitForAck(stream dispatchdv1.WorkerService_ConnectClient, workerID string) (*dispatchdv1.WorkerAck, int, error) {
 	assignments := 0
 
 	for {

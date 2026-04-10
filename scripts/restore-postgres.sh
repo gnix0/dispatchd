@@ -14,4 +14,4 @@ if [ ! -f "${BACKUP_FILE}" ]; then
   exit 1
 fi
 
-docker compose exec -T postgres psql -U postgres -d task_orchestrator < "${BACKUP_FILE}"
+docker compose exec -T postgres psql -U postgres -d dispatchd < "${BACKUP_FILE}"

@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"os"
 
-	schedulerapp "github.com/gnix0/task-orchestrator/internal/application/scheduler"
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
-	"github.com/gnix0/task-orchestrator/internal/platform/observability"
-	runtimeapp "github.com/gnix0/task-orchestrator/internal/platform/runtime"
-	"github.com/gnix0/task-orchestrator/internal/platform/store"
+	schedulerapp "github.com/gnix0/dispatchd/internal/application/scheduler"
+	"github.com/gnix0/dispatchd/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/observability"
+	runtimeapp "github.com/gnix0/dispatchd/internal/platform/runtime"
+	"github.com/gnix0/dispatchd/internal/platform/store"
 )
 
 func main() {

@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: taskorchestrator/v1/task_orchestrator.proto
+// source: dispatchd/v1/dispatchd.proto
 
-package taskorchestratorv1
+package dispatchdv1
 
 import (
 	context "context"
@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	JobService_SubmitJob_FullMethodName      = "/taskorchestrator.v1.JobService/SubmitJob"
-	JobService_CancelJob_FullMethodName      = "/taskorchestrator.v1.JobService/CancelJob"
-	JobService_GetJob_FullMethodName         = "/taskorchestrator.v1.JobService/GetJob"
-	JobService_ListExecutions_FullMethodName = "/taskorchestrator.v1.JobService/ListExecutions"
+	JobService_SubmitJob_FullMethodName      = "/dispatchd.v1.JobService/SubmitJob"
+	JobService_CancelJob_FullMethodName      = "/dispatchd.v1.JobService/CancelJob"
+	JobService_GetJob_FullMethodName         = "/dispatchd.v1.JobService/GetJob"
+	JobService_ListExecutions_FullMethodName = "/dispatchd.v1.JobService/ListExecutions"
 )
 
 // JobServiceClient is the client API for JobService service.
@@ -210,7 +210,7 @@ func _JobService_ListExecutions_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var JobService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "taskorchestrator.v1.JobService",
+	ServiceName: "dispatchd.v1.JobService",
 	HandlerType: (*JobServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -231,11 +231,11 @@ var JobService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "taskorchestrator/v1/task_orchestrator.proto",
+	Metadata: "dispatchd/v1/dispatchd.proto",
 }
 
 const (
-	WorkerService_Connect_FullMethodName = "/taskorchestrator.v1.WorkerService/Connect"
+	WorkerService_Connect_FullMethodName = "/dispatchd.v1.WorkerService/Connect"
 )
 
 // WorkerServiceClient is the client API for WorkerService service.
@@ -316,7 +316,7 @@ type WorkerService_ConnectServer = grpc.BidiStreamingServer[ConnectRequest, Conn
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorkerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "taskorchestrator.v1.WorkerService",
+	ServiceName: "dispatchd.v1.WorkerService",
 	HandlerType: (*WorkerServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
@@ -327,5 +327,5 @@ var WorkerService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "taskorchestrator/v1/task_orchestrator.proto",
+	Metadata: "dispatchd/v1/dispatchd.proto",
 }

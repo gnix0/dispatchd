@@ -3,8 +3,8 @@ package grpcapi
 import (
 	"errors"
 
-	"github.com/gnix0/task-orchestrator/internal/application/jobs"
-	"github.com/gnix0/task-orchestrator/internal/application/workers"
+	"github.com/gnix0/dispatchd/internal/application/jobs"
+	"github.com/gnix0/dispatchd/internal/application/workers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

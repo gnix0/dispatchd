@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: task-orchestrator-config
+  name: dispatchd-config
 data:
   APP_ENV: kubernetes
   LOG_LEVEL: info
@@ -10,10 +10,10 @@ data:
   SCHEDULER_POLL_INTERVAL: 2s
   LEASE_DURATION: 30s
   WORKER_HEARTBEAT_TTL: 45s
-  READY_QUEUE_PREFIX: task-orchestrator:ready
+  READY_QUEUE_PREFIX: dispatchd:ready
   AUTH_ENABLED: "false"
-  AUTH_JWT_ISSUER: task-orchestrator
-  AUTH_JWT_AUDIENCE: task-orchestrator-clients
+  AUTH_JWT_ISSUER: dispatchd
+  AUTH_JWT_AUDIENCE: dispatchd-clients
   AUDIT_LOG_ENABLED: "true"
   TLS_ENABLED: "false"
   TLS_REQUIRE_CLIENT_CERT: "false"

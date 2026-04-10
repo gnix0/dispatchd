@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/config"
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

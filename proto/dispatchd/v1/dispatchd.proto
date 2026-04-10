@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package taskorchestrator.v1;
+package dispatchd.v1;
 
-option go_package = "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1;taskorchestratorv1";
+option go_package = "github.com/gnix0/dispatchd/gen/go/dispatchd/v1;dispatchdv1";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";

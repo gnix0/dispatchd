@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/config"
 	"google.golang.org/grpc/credentials"
 )
 

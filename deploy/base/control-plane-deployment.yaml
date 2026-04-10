@@ -13,7 +13,7 @@ spec:
         app.kubernetes.io/name: control-plane
         app.kubernetes.io/component: control-plane
     spec:
-      serviceAccountName: task-orchestrator
+      serviceAccountName: dispatchd
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: control-plane
-          image: ghcr.io/gnix0/task-orchestrator-control-plane:dev
+          image: ghcr.io/gnix0/dispatchd-control-plane:dev
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -32,9 +32,9 @@ spec:
             readOnlyRootFilesystem: true
           envFrom:
             - configMapRef:
-                name: task-orchestrator-config
+                name: dispatchd-config
             - secretRef:
-                name: task-orchestrator-secrets
+                name: dispatchd-secrets
           env:
             - name: GRPC_PORT
               value: "8080"
@@ -51,7 +51,7 @@ spec:
               containerPort: 9100
           volumeMounts:
             - name: tls-materials
-              mountPath: /var/run/task-orchestrator/tls
+              mountPath: /var/run/dispatchd/tls
               readOnly: true
           readinessProbe:
             grpc:
@@ -71,4 +71,4 @@ spec:
       volumes:
         - name: tls-materials
           secret:
-            secretName: task-orchestrator-tls
+            secretName: dispatchd-tls

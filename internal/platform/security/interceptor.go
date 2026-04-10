@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -99,14 +99,14 @@ func isPublicMethod(fullMethod string) bool {
 
 func isAuthorized(fullMethod string, principal *Principal) bool {
 	switch fullMethod {
-	case "/taskorchestrator.v1.JobService/SubmitJob":
+	case "/dispatchd.v1.JobService/SubmitJob":
 		return HasAnyRole(principal, "submitter", "operator", "admin")
-	case "/taskorchestrator.v1.JobService/CancelJob":
+	case "/dispatchd.v1.JobService/CancelJob":
 		return HasAnyRole(principal, "operator", "admin")
-	case "/taskorchestrator.v1.JobService/GetJob",
-		"/taskorchestrator.v1.JobService/ListExecutions":
+	case "/dispatchd.v1.JobService/GetJob",
+		"/dispatchd.v1.JobService/ListExecutions":
 		return HasAnyRole(principal, "viewer", "submitter", "operator", "admin")
-	case "/taskorchestrator.v1.WorkerService/Connect":
+	case "/dispatchd.v1.WorkerService/Connect":
 		return HasAnyRole(principal, "worker", "service", "operator", "admin")
 	default:
 		return HasAnyRole(principal, "admin")

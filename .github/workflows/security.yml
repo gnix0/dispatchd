@@ -114,7 +114,7 @@ jobs:
           build-args: |
             SERVICE=${{ matrix.service }}
           load: true
-          tags: local/task-orchestrator-${{ matrix.service }}:scan
+          tags: local/dispatchd-${{ matrix.service }}:scan
 
       - name: Scan container image with Trivy
         run: |
@@ -124,4 +124,4 @@ jobs:
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
             --exit-code 1 \
-            local/task-orchestrator-${{ matrix.service }}:scan
+            local/dispatchd-${{ matrix.service }}:scan

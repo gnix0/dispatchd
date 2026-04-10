@@ -62,7 +62,7 @@ jobs:
           build-args: |
             SERVICE=${{ matrix.service }}
           push: true
-          tags: ghcr.io/gnix0/task-orchestrator-${{ matrix.service }}:${{ steps.tag.outputs.value }}
+          tags: ghcr.io/gnix0/dispatchd-${{ matrix.service }}:${{ steps.tag.outputs.value }}
 
   open-gitops-pr:
     needs: publish-images

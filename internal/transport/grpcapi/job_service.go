@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
-	"github.com/gnix0/task-orchestrator/internal/application/jobs"
-	"github.com/gnix0/task-orchestrator/internal/platform/observability"
+	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
+	"github.com/gnix0/dispatchd/internal/application/jobs"
+	"github.com/gnix0/dispatchd/internal/platform/observability"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,23 +14,23 @@ import (
 
 type JobService struct {
 	jobApplication jobs.Service
-	taskorchestratorv1.UnimplementedJobServiceServer
+	dispatchdv1.UnimplementedJobServiceServer
 }
 
-var _ taskorchestratorv1.JobServiceServer = (*JobService)(nil)
+var _ dispatchdv1.JobServiceServer = (*JobService)(nil)
 
 func RegisterControlPlane(jobApplication jobs.Service) func(*grpc.Server) {
 	return func(server *grpc.Server) {
-		taskorchestratorv1.RegisterJobServiceServer(server, &JobService{jobApplication: jobApplication})
+		dispatchdv1.RegisterJobServiceServer(server, &JobService{jobApplication: jobApplication})
 	}
 }
 
-func (s *JobService) SubmitJob(ctx context.Context, request *taskorchestratorv1.SubmitJobRequest) (_ *taskorchestratorv1.SubmitJobResponse, err error) {
+func (s *JobService) SubmitJob(ctx context.Context, request *dispatchdv1.SubmitJobRequest) (_ *dispatchdv1.SubmitJobResponse, err error) {
 	started := time.Now()
 	ctx, span := observability.StartSpan(ctx, "controlplane.submit_job")
 	defer func() {
 		span.End()
-		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/SubmitJob", started, err)
+		observability.RecordGRPCRequest("unary", "/dispatchd.v1.JobService/SubmitJob", started, err)
 		observability.RecordJobOperation("submit", err)
 	}()
 
@@ -51,15 +51,15 @@ func (s *JobService) SubmitJob(ctx context.Context, request *taskorchestratorv1.
 		return nil, err
 	}
 
-	return &taskorchestratorv1.SubmitJobResponse{Job: toProtoJob(job)}, nil
+	return &dispatchdv1.SubmitJobResponse{Job: toProtoJob(job)}, nil
 }
 
-func (s *JobService) CancelJob(ctx context.Context, request *taskorchestratorv1.CancelJobRequest) (_ *taskorchestratorv1.CancelJobResponse, err error) {
+func (s *JobService) CancelJob(ctx context.Context, request *dispatchdv1.CancelJobRequest) (_ *dispatchdv1.CancelJobResponse, err error) {
 	started := time.Now()
 	ctx, span := observability.StartSpan(ctx, "controlplane.cancel_job")
 	defer func() {
 		span.End()
-		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/CancelJob", started, err)
+		observability.RecordGRPCRequest("unary", "/dispatchd.v1.JobService/CancelJob", started, err)
 		observability.RecordJobOperation("cancel", err)
 	}()
 
@@ -69,15 +69,15 @@ func (s *JobService) CancelJob(ctx context.Context, request *taskorchestratorv1.
 		return nil, err
 	}
 
-	return &taskorchestratorv1.CancelJobResponse{Job: toProtoJob(job)}, nil
+	return &dispatchdv1.CancelJobResponse{Job: toProtoJob(job)}, nil
 }
 
-func (s *JobService) GetJob(ctx context.Context, request *taskorchestratorv1.GetJobRequest) (_ *taskorchestratorv1.GetJobResponse, err error) {
+func (s *JobService) GetJob(ctx context.Context, request *dispatchdv1.GetJobRequest) (_ *dispatchdv1.GetJobResponse, err error) {
 	started := time.Now()
 	ctx, span := observability.StartSpan(ctx, "controlplane.get_job")
 	defer func() {
 		span.End()
-		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/GetJob", started, err)
+		observability.RecordGRPCRequest("unary", "/dispatchd.v1.JobService/GetJob", started, err)
 		observability.RecordJobOperation("get", err)
 	}()
 
@@ -87,15 +87,15 @@ func (s *JobService) GetJob(ctx context.Context, request *taskorchestratorv1.Get
 		return nil, err
 	}
 
-	return &taskorchestratorv1.GetJobResponse{Job: toProtoJob(job)}, nil
+	return &dispatchdv1.GetJobResponse{Job: toProtoJob(job)}, nil
 }
 
-func (s *JobService) ListExecutions(ctx context.Context, request *taskorchestratorv1.ListExecutionsRequest) (_ *taskorchestratorv1.ListExecutionsResponse, err error) {
+func (s *JobService) ListExecutions(ctx context.Context, request *dispatchdv1.ListExecutionsRequest) (_ *dispatchdv1.ListExecutionsResponse, err error) {
 	started := time.Now()
 	ctx, span := observability.StartSpan(ctx, "controlplane.list_executions")
 	defer func() {
 		span.End()
-		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/ListExecutions", started, err)
+		observability.RecordGRPCRequest("unary", "/dispatchd.v1.JobService/ListExecutions", started, err)
 		observability.RecordJobOperation("list_executions", err)
 	}()
 
@@ -105,8 +105,8 @@ func (s *JobService) ListExecutions(ctx context.Context, request *taskorchestrat
 		return nil, err
 	}
 
-	response := &taskorchestratorv1.ListExecutionsResponse{
-		Executions: make([]*taskorchestratorv1.Execution, 0, len(executions)),
+	response := &dispatchdv1.ListExecutionsResponse{
+		Executions: make([]*dispatchdv1.Execution, 0, len(executions)),
 	}
 
 	for _, execution := range executions {
@@ -116,8 +116,8 @@ func (s *JobService) ListExecutions(ctx context.Context, request *taskorchestrat
 	return response, nil
 }
 
-func toProtoJob(job jobs.Job) *taskorchestratorv1.Job {
-	return &taskorchestratorv1.Job{
+func toProtoJob(job jobs.Job) *dispatchdv1.Job {
+	return &dispatchdv1.Job{
 		JobId:          job.ID,
 		JobType:        job.JobType,
 		Payload:        append([]byte(nil), job.Payload...),
@@ -125,7 +125,7 @@ func toProtoJob(job jobs.Job) *taskorchestratorv1.Job {
 		Priority:       job.Priority,
 		IdempotencyKey: job.IdempotencyKey,
 		Metadata:       cloneMetadata(job.Metadata),
-		RetryPolicy: &taskorchestratorv1.RetryPolicy{
+		RetryPolicy: &dispatchdv1.RetryPolicy{
 			MaxAttempts:    job.RetryPolicy.MaxAttempts,
 			InitialBackoff: durationpb.New(job.RetryPolicy.InitialBackoff),
 			MaxBackoff:     durationpb.New(job.RetryPolicy.MaxBackoff),
@@ -135,8 +135,8 @@ func toProtoJob(job jobs.Job) *taskorchestratorv1.Job {
 	}
 }
 
-func toProtoExecution(execution jobs.Execution) *taskorchestratorv1.Execution {
-	result := &taskorchestratorv1.Execution{
+func toProtoExecution(execution jobs.Execution) *dispatchdv1.Execution {
+	result := &dispatchdv1.Execution{
 		ExecutionId:  execution.ID,
 		JobId:        execution.JobID,
 		Attempt:      execution.Attempt,
@@ -146,19 +146,19 @@ func toProtoExecution(execution jobs.Execution) *taskorchestratorv1.Execution {
 
 	switch execution.Status {
 	case jobs.ExecutionStatusQueued:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_QUEUED
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_QUEUED
 	case jobs.ExecutionStatusClaimed:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_CLAIMED
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_CLAIMED
 	case jobs.ExecutionStatusRunning:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_RUNNING
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_RUNNING
 	case jobs.ExecutionStatusSucceeded:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_SUCCEEDED
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_SUCCEEDED
 	case jobs.ExecutionStatusFailed:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_FAILED
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_FAILED
 	case jobs.ExecutionStatusDeadLettered:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_DEAD_LETTERED
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_DEAD_LETTERED
 	default:
-		result.Status = taskorchestratorv1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED
+		result.Status = dispatchdv1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED
 	}
 
 	if execution.ClaimedAt != nil {
@@ -174,20 +174,20 @@ func toProtoExecution(execution jobs.Execution) *taskorchestratorv1.Execution {
 	return result
 }
 
-func toProtoJobStatus(status jobs.Status) taskorchestratorv1.JobStatus {
+func toProtoJobStatus(status jobs.Status) dispatchdv1.JobStatus {
 	switch status {
 	case jobs.StatusPending:
-		return taskorchestratorv1.JobStatus_JOB_STATUS_PENDING
+		return dispatchdv1.JobStatus_JOB_STATUS_PENDING
 	case jobs.StatusDispatching:
-		return taskorchestratorv1.JobStatus_JOB_STATUS_DISPATCHING
+		return dispatchdv1.JobStatus_JOB_STATUS_DISPATCHING
 	case jobs.StatusSucceeded:
-		return taskorchestratorv1.JobStatus_JOB_STATUS_SUCCEEDED
+		return dispatchdv1.JobStatus_JOB_STATUS_SUCCEEDED
 	case jobs.StatusFailed:
-		return taskorchestratorv1.JobStatus_JOB_STATUS_FAILED
+		return dispatchdv1.JobStatus_JOB_STATUS_FAILED
 	case jobs.StatusCanceled:
-		return taskorchestratorv1.JobStatus_JOB_STATUS_CANCELED
+		return dispatchdv1.JobStatus_JOB_STATUS_CANCELED
 	default:
-		return taskorchestratorv1.JobStatus_JOB_STATUS_UNSPECIFIED
+		return dispatchdv1.JobStatus_JOB_STATUS_UNSPECIFIED
 	}
 }
 

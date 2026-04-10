@@ -13,7 +13,7 @@ spec:
         app.kubernetes.io/name: scheduler
         app.kubernetes.io/component: scheduler
     spec:
-      serviceAccountName: task-orchestrator
+      serviceAccountName: dispatchd
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: scheduler
-          image: ghcr.io/gnix0/task-orchestrator-scheduler:dev
+          image: ghcr.io/gnix0/dispatchd-scheduler:dev
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -32,9 +32,9 @@ spec:
             readOnlyRootFilesystem: true
           envFrom:
             - configMapRef:
-                name: task-orchestrator-config
+                name: dispatchd-config
             - secretRef:
-                name: task-orchestrator-secrets
+                name: dispatchd-secrets
           env:
             - name: METRICS_PORT
               value: "9101"
@@ -47,7 +47,7 @@ spec:
               containerPort: 9101
           volumeMounts:
             - name: tls-materials
-              mountPath: /var/run/task-orchestrator/tls
+              mountPath: /var/run/dispatchd/tls
               readOnly: true
           resources:
             requests:
@@ -59,4 +59,4 @@ spec:
       volumes:
         - name: tls-materials
           secret:
-            secretName: task-orchestrator-tls
+            secretName: dispatchd-tls

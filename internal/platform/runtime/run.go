@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
-	"github.com/gnix0/task-orchestrator/internal/version"
+	"github.com/gnix0/dispatchd/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/version"
 )
 
 func SignalContext() (context.Context, context.CancelFunc) {

@@ -5,12 +5,12 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
-	"github.com/gnix0/task-orchestrator/internal/platform/grpcserver"
-	"github.com/gnix0/task-orchestrator/internal/platform/observability"
-	runtimeapp "github.com/gnix0/task-orchestrator/internal/platform/runtime"
-	"github.com/gnix0/task-orchestrator/internal/platform/store"
-	"github.com/gnix0/task-orchestrator/internal/transport/grpcapi"
+	"github.com/gnix0/dispatchd/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/grpcserver"
+	"github.com/gnix0/dispatchd/internal/platform/observability"
+	runtimeapp "github.com/gnix0/dispatchd/internal/platform/runtime"
+	"github.com/gnix0/dispatchd/internal/platform/store"
+	"github.com/gnix0/dispatchd/internal/transport/grpcapi"
 )
 
 func main() {

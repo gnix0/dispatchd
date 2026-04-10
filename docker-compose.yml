@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:17-bookworm
     environment:
-      POSTGRES_DB: task_orchestrator
+      POSTGRES_DB: dispatchd
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -55,7 +55,7 @@ services:
       - prometheus
 
   control-plane:
-    image: ghcr.io/gnix0/task-orchestrator-control-plane:dev
+    image: ghcr.io/gnix0/dispatchd-control-plane:dev
     build:
       context: .
       dockerfile: Dockerfile
@@ -67,15 +67,15 @@ services:
       GRPC_PORT: "8080"
       METRICS_PORT: "9100"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/dispatchd?sslmode=disable
       REDIS_ADDRESS: redis:6379
       SCHEDULER_POLL_INTERVAL: 2s
       LEASE_DURATION: 30s
       WORKER_HEARTBEAT_TTL: 45s
       INSTANCE_ID: control-plane-compose
       AUTH_ENABLED: "false"
-      AUTH_JWT_ISSUER: task-orchestrator
-      AUTH_JWT_AUDIENCE: task-orchestrator-clients
+      AUTH_JWT_ISSUER: dispatchd
+      AUTH_JWT_AUDIENCE: dispatchd-clients
       AUTH_JWT_SHARED_SECRET: change-me-dev
       AUDIT_LOG_ENABLED: "true"
       TLS_ENABLED: "false"
@@ -93,7 +93,7 @@ services:
       - jaeger
 
   scheduler:
-    image: ghcr.io/gnix0/task-orchestrator-scheduler:dev
+    image: ghcr.io/gnix0/dispatchd-scheduler:dev
     build:
       context: .
       dockerfile: Dockerfile
@@ -104,15 +104,15 @@ services:
       LOG_LEVEL: debug
       METRICS_PORT: "9101"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/dispatchd?sslmode=disable
       REDIS_ADDRESS: redis:6379
       SCHEDULER_POLL_INTERVAL: 2s
       LEASE_DURATION: 30s
       WORKER_HEARTBEAT_TTL: 45s
       INSTANCE_ID: scheduler-compose
       AUTH_ENABLED: "false"
-      AUTH_JWT_ISSUER: task-orchestrator
-      AUTH_JWT_AUDIENCE: task-orchestrator-clients
+      AUTH_JWT_ISSUER: dispatchd
+      AUTH_JWT_AUDIENCE: dispatchd-clients
       AUTH_JWT_SHARED_SECRET: change-me-dev
       AUDIT_LOG_ENABLED: "true"
       TLS_ENABLED: "false"
@@ -129,7 +129,7 @@ services:
       - jaeger
 
   worker-gateway:
-    image: ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
+    image: ghcr.io/gnix0/dispatchd-worker-gateway:dev
     build:
       context: .
       dockerfile: Dockerfile
@@ -141,15 +141,15 @@ services:
       GRPC_PORT: "8080"
       METRICS_PORT: "9102"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/dispatchd?sslmode=disable
       REDIS_ADDRESS: redis:6379
       SCHEDULER_POLL_INTERVAL: 2s
       LEASE_DURATION: 30s
       WORKER_HEARTBEAT_TTL: 45s
       INSTANCE_ID: worker-gateway-compose
       AUTH_ENABLED: "false"
-      AUTH_JWT_ISSUER: task-orchestrator
-      AUTH_JWT_AUDIENCE: task-orchestrator-clients
+      AUTH_JWT_ISSUER: dispatchd
+      AUTH_JWT_AUDIENCE: dispatchd-clients
       AUTH_JWT_SHARED_SECRET: change-me-dev
       AUDIT_LOG_ENABLED: "true"
       TLS_ENABLED: "false"

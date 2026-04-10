@@ -20,4 +20,4 @@ resources:
 labels:
   - includeSelectors: true
     pairs:
-      app.kubernetes.io/part-of: task-orchestrator
+      app.kubernetes.io/part-of: dispatchd

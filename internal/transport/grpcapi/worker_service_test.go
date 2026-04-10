@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
-	"github.com/gnix0/task-orchestrator/internal/application/jobs"
-	"github.com/gnix0/task-orchestrator/internal/application/workers"
+	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
+	"github.com/gnix0/dispatchd/internal/application/jobs"
+	"github.com/gnix0/dispatchd/internal/application/workers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -23,10 +23,10 @@ func TestConnectRegistersWorkerAndAcceptsHeartbeat(t *testing.T) {
 	}
 	stream := &fakeWorkerConnectStream{
 		ctx: context.Background(),
-		recvMessages: []*taskorchestratorv1.ConnectRequest{
+		recvMessages: []*dispatchdv1.ConnectRequest{
 			{
-				Payload: &taskorchestratorv1.ConnectRequest_Registration{
-					Registration: &taskorchestratorv1.WorkerRegistration{
+				Payload: &dispatchdv1.ConnectRequest_Registration{
+					Registration: &dispatchdv1.WorkerRegistration{
 						WorkerId:       "worker-1",
 						Capabilities:   []string{"email"},
 						MaxConcurrency: 4,
@@ -34,9 +34,9 @@ func TestConnectRegistersWorkerAndAcceptsHeartbeat(t *testing.T) {
 				},
 			},
 			{
-				Payload: &taskorchestratorv1.ConnectRequest_Heartbeat{
-					Heartbeat: &taskorchestratorv1.WorkerHeartbeat{
-						Status:             taskorchestratorv1.WorkerStatus_WORKER_STATUS_BUSY,
+				Payload: &dispatchdv1.ConnectRequest_Heartbeat{
+					Heartbeat: &dispatchdv1.WorkerHeartbeat{
+						Status:             dispatchdv1.WorkerStatus_WORKER_STATUS_BUSY,
 						InflightExecutions: 2,
 					},
 				},
@@ -81,7 +81,7 @@ func TestConnectRejectsMissingPayload(t *testing.T) {
 	}
 	stream := &fakeWorkerConnectStream{
 		ctx:          context.Background(),
-		recvMessages: []*taskorchestratorv1.ConnectRequest{{}},
+		recvMessages: []*dispatchdv1.ConnectRequest{{}},
 	}
 
 	err := service.Connect(stream)
@@ -99,10 +99,10 @@ func TestConnectAcceptsTaskResult(t *testing.T) {
 	}
 	stream := &fakeWorkerConnectStream{
 		ctx: context.Background(),
-		recvMessages: []*taskorchestratorv1.ConnectRequest{
+		recvMessages: []*dispatchdv1.ConnectRequest{
 			{
-				Payload: &taskorchestratorv1.ConnectRequest_Result{
-					Result: &taskorchestratorv1.TaskResult{ExecutionId: "exec-1", Success: true},
+				Payload: &dispatchdv1.ConnectRequest_Result{
+					Result: &dispatchdv1.TaskResult{ExecutionId: "exec-1", Success: true},
 				},
 			},
 		},
@@ -143,10 +143,10 @@ func (f *fakeDispatchService) ReleaseExecution(context.Context, string, string) 
 }
 
 type fakeWorkerConnectStream struct {
-	taskorchestratorv1.WorkerService_ConnectServer
+	dispatchdv1.WorkerService_ConnectServer
 	ctx          context.Context
-	recvMessages []*taskorchestratorv1.ConnectRequest
-	sentMessages []*taskorchestratorv1.ConnectResponse
+	recvMessages []*dispatchdv1.ConnectRequest
+	sentMessages []*dispatchdv1.ConnectResponse
 	recvIndex    int
 }
 
@@ -154,12 +154,12 @@ func (s *fakeWorkerConnectStream) Context() context.Context {
 	return s.ctx
 }
 
-func (s *fakeWorkerConnectStream) Send(response *taskorchestratorv1.ConnectResponse) error {
+func (s *fakeWorkerConnectStream) Send(response *dispatchdv1.ConnectResponse) error {
 	s.sentMessages = append(s.sentMessages, response)
 	return nil
 }
 
-func (s *fakeWorkerConnectStream) Recv() (*taskorchestratorv1.ConnectRequest, error) {
+func (s *fakeWorkerConnectStream) Recv() (*dispatchdv1.ConnectRequest, error) {
 	if s.recvIndex >= len(s.recvMessages) {
 		return nil, io.EOF
 	}

@@ -1,4 +1,4 @@
-module github.com/gnix0/task-orchestrator
+module github.com/gnix0/dispatchd
 
 go 1.25.0
 

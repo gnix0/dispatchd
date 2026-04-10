@@ -2,7 +2,7 @@
 
 set -eu
 
-CLUSTER_NAME="${KIND_CLUSTER_NAME:-task-orchestrator}"
+CLUSTER_NAME="${KIND_CLUSTER_NAME:-dispatchd}"
 REPO_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 
 ensure_kind_cluster() {
@@ -12,15 +12,15 @@ ensure_kind_cluster() {
 }
 
 build_images() {
-  docker build --build-arg SERVICE=control-plane -t ghcr.io/gnix0/task-orchestrator-control-plane:dev "${REPO_ROOT}"
-  docker build --build-arg SERVICE=scheduler -t ghcr.io/gnix0/task-orchestrator-scheduler:dev "${REPO_ROOT}"
-  docker build --build-arg SERVICE=worker-gateway -t ghcr.io/gnix0/task-orchestrator-worker-gateway:dev "${REPO_ROOT}"
+  docker build --build-arg SERVICE=control-plane -t ghcr.io/gnix0/dispatchd-control-plane:dev "${REPO_ROOT}"
+  docker build --build-arg SERVICE=scheduler -t ghcr.io/gnix0/dispatchd-scheduler:dev "${REPO_ROOT}"
+  docker build --build-arg SERVICE=worker-gateway -t ghcr.io/gnix0/dispatchd-worker-gateway:dev "${REPO_ROOT}"
 }
 
 load_images() {
-  kind load docker-image --name "${CLUSTER_NAME}" ghcr.io/gnix0/task-orchestrator-control-plane:dev
-  kind load docker-image --name "${CLUSTER_NAME}" ghcr.io/gnix0/task-orchestrator-scheduler:dev
-  kind load docker-image --name "${CLUSTER_NAME}" ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
+  kind load docker-image --name "${CLUSTER_NAME}" ghcr.io/gnix0/dispatchd-control-plane:dev
+  kind load docker-image --name "${CLUSTER_NAME}" ghcr.io/gnix0/dispatchd-scheduler:dev
+  kind load docker-image --name "${CLUSTER_NAME}" ghcr.io/gnix0/dispatchd-worker-gateway:dev
 }
 
 apply_manifests() {

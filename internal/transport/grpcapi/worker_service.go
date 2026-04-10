@@ -4,11 +4,11 @@ import (
 	"io"
 	"time"
 
-	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
-	"github.com/gnix0/task-orchestrator/internal/application/jobs"
-	"github.com/gnix0/task-orchestrator/internal/application/workers"
-	"github.com/gnix0/task-orchestrator/internal/platform/observability"
-	"github.com/gnix0/task-orchestrator/internal/platform/security"
+	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
+	"github.com/gnix0/dispatchd/internal/application/jobs"
+	"github.com/gnix0/dispatchd/internal/application/workers"
+	"github.com/gnix0/dispatchd/internal/platform/observability"
+	"github.com/gnix0/dispatchd/internal/platform/security"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -20,14 +20,14 @@ type WorkerService struct {
 	workerApplication workers.Service
 	dispatchService   jobs.DispatchService
 	leaseDuration     time.Duration
-	taskorchestratorv1.UnimplementedWorkerServiceServer
+	dispatchdv1.UnimplementedWorkerServiceServer
 }
 
-var _ taskorchestratorv1.WorkerServiceServer = (*WorkerService)(nil)
+var _ dispatchdv1.WorkerServiceServer = (*WorkerService)(nil)
 
 func RegisterWorkerGateway(workerApplication workers.Service, dispatchService jobs.DispatchService, leaseDuration time.Duration) func(*grpc.Server) {
 	return func(server *grpc.Server) {
-		taskorchestratorv1.RegisterWorkerServiceServer(server, &WorkerService{
+		dispatchdv1.RegisterWorkerServiceServer(server, &WorkerService{
 			workerApplication: workerApplication,
 			dispatchService:   dispatchService,
 			leaseDuration:     leaseDuration,
@@ -35,13 +35,13 @@ func RegisterWorkerGateway(workerApplication workers.Service, dispatchService jo
 	}
 }
 
-func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectServer) (err error) {
+func (s *WorkerService) Connect(stream dispatchdv1.WorkerService_ConnectServer) (err error) {
 	var streamWorkerID string
 	started := time.Now()
 	ctx, span := observability.StartSpan(stream.Context(), "worker_gateway.connect")
 	defer func() {
 		span.End()
-		observability.RecordGRPCRequest("stream", "/taskorchestrator.v1.WorkerService/Connect", started, err)
+		observability.RecordGRPCRequest("stream", "/dispatchd.v1.WorkerService/Connect", started, err)
 	}()
 
 	for {
@@ -54,7 +54,7 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 		}
 
 		switch payload := request.GetPayload().(type) {
-		case *taskorchestratorv1.ConnectRequest_Registration:
+		case *dispatchdv1.ConnectRequest_Registration:
 			spanCtx, eventSpan := observability.StartSpan(ctx, "worker_gateway.registration",
 				attribute.String("worker.id", payload.Registration.GetWorkerId()),
 			)
@@ -83,7 +83,7 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 			if eventErr != nil {
 				return eventErr
 			}
-		case *taskorchestratorv1.ConnectRequest_Heartbeat:
+		case *dispatchdv1.ConnectRequest_Heartbeat:
 			workerID := payload.Heartbeat.GetWorkerId()
 			if workerID == "" {
 				workerID = streamWorkerID
@@ -121,7 +121,7 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 			if eventErr != nil {
 				return eventErr
 			}
-		case *taskorchestratorv1.ConnectRequest_Result:
+		case *dispatchdv1.ConnectRequest_Result:
 			workerID := streamWorkerID
 			if workerID == "" {
 				workerID = payload.Result.GetMetadata()["worker_id"]
@@ -164,7 +164,7 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 			if eventErr != nil {
 				return eventErr
 			}
-		case *taskorchestratorv1.ConnectRequest_LogChunk:
+		case *dispatchdv1.ConnectRequest_LogChunk:
 			spanCtx, eventSpan := observability.StartSpan(ctx, "worker_gateway.log_chunk",
 				attribute.String("worker.id", streamWorkerID),
 				attribute.String("execution.id", payload.LogChunk.GetExecutionId()),
@@ -188,10 +188,10 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 	}
 }
 
-func newWorkerAck(workerID, message string) *taskorchestratorv1.ConnectResponse {
-	return &taskorchestratorv1.ConnectResponse{
-		Payload: &taskorchestratorv1.ConnectResponse_Ack{
-			Ack: &taskorchestratorv1.WorkerAck{
+func newWorkerAck(workerID, message string) *dispatchdv1.ConnectResponse {
+	return &dispatchdv1.ConnectResponse{
+		Payload: &dispatchdv1.ConnectResponse_Ack{
+			Ack: &dispatchdv1.WorkerAck{
 				WorkerId: workerID,
 				Message:  message,
 			},
@@ -199,10 +199,10 @@ func newWorkerAck(workerID, message string) *taskorchestratorv1.ConnectResponse 
 	}
 }
 
-func newExecutionAck(executionID, workerID, message string) *taskorchestratorv1.ConnectResponse {
-	return &taskorchestratorv1.ConnectResponse{
-		Payload: &taskorchestratorv1.ConnectResponse_Ack{
-			Ack: &taskorchestratorv1.WorkerAck{
+func newExecutionAck(executionID, workerID, message string) *dispatchdv1.ConnectResponse {
+	return &dispatchdv1.ConnectResponse{
+		Payload: &dispatchdv1.ConnectResponse_Ack{
+			Ack: &dispatchdv1.WorkerAck{
 				ExecutionId: executionID,
 				WorkerId:    workerID,
 				Message:     message,
@@ -211,7 +211,7 @@ func newExecutionAck(executionID, workerID, message string) *taskorchestratorv1.
 	}
 }
 
-func (s *WorkerService) sendAssignments(stream taskorchestratorv1.WorkerService_ConnectServer, worker workers.Worker) error {
+func (s *WorkerService) sendAssignments(stream dispatchdv1.WorkerService_ConnectServer, worker workers.Worker) error {
 	availableSlots := int(worker.MaxConcurrency - worker.InflightExecutions)
 	if availableSlots <= 0 || worker.Status == workers.StatusDraining || worker.Status == workers.StatusOffline {
 		return nil
@@ -248,10 +248,10 @@ func (s *WorkerService) sendAssignments(stream taskorchestratorv1.WorkerService_
 	return nil
 }
 
-func toAssignmentResponse(assignment *jobs.Assignment) *taskorchestratorv1.ConnectResponse {
-	return &taskorchestratorv1.ConnectResponse{
-		Payload: &taskorchestratorv1.ConnectResponse_Assignment{
-			Assignment: &taskorchestratorv1.TaskAssignment{
+func toAssignmentResponse(assignment *jobs.Assignment) *dispatchdv1.ConnectResponse {
+	return &dispatchdv1.ConnectResponse{
+		Payload: &dispatchdv1.ConnectResponse_Assignment{
+			Assignment: &dispatchdv1.TaskAssignment{
 				ExecutionId:    assignment.ExecutionID,
 				JobType:        assignment.JobType,
 				Payload:        append([]byte(nil), assignment.Payload...),
@@ -262,15 +262,15 @@ func toAssignmentResponse(assignment *jobs.Assignment) *taskorchestratorv1.Conne
 	}
 }
 
-func fromProtoWorkerStatus(status taskorchestratorv1.WorkerStatus) workers.Status {
+func fromProtoWorkerStatus(status dispatchdv1.WorkerStatus) workers.Status {
 	switch status {
-	case taskorchestratorv1.WorkerStatus_WORKER_STATUS_READY:
+	case dispatchdv1.WorkerStatus_WORKER_STATUS_READY:
 		return workers.StatusReady
-	case taskorchestratorv1.WorkerStatus_WORKER_STATUS_BUSY:
+	case dispatchdv1.WorkerStatus_WORKER_STATUS_BUSY:
 		return workers.StatusBusy
-	case taskorchestratorv1.WorkerStatus_WORKER_STATUS_DRAINING:
+	case dispatchdv1.WorkerStatus_WORKER_STATUS_DRAINING:
 		return workers.StatusDraining
-	case taskorchestratorv1.WorkerStatus_WORKER_STATUS_OFFLINE:
+	case dispatchdv1.WorkerStatus_WORKER_STATUS_OFFLINE:
 		return workers.StatusOffline
 	default:
 		return workers.StatusUnspecified

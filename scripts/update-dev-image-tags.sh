@@ -10,6 +10,6 @@ update_image_tag() {
   perl -0pi -e "s|(newName: \Q${image_name}\E\n\s+newTag: )\S+|\${1}${TAG}|g" "${FILE}"
 }
 
-update_image_tag "ghcr.io/gnix0/task-orchestrator-control-plane"
-update_image_tag "ghcr.io/gnix0/task-orchestrator-scheduler"
-update_image_tag "ghcr.io/gnix0/task-orchestrator-worker-gateway"
+update_image_tag "ghcr.io/gnix0/dispatchd-control-plane"
+update_image_tag "ghcr.io/gnix0/dispatchd-scheduler"
+update_image_tag "ghcr.io/gnix0/dispatchd-worker-gateway"

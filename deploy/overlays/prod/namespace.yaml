@@ -1,4 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: task-orchestrator-prod
+  name: dispatchd-prod

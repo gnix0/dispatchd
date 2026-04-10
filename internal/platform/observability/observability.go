@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -63,41 +63,41 @@ func Start(ctx context.Context, logger *slog.Logger, cfg config.Service) (*Handl
 	runtime := &runtimeState{
 		service: cfg.Name,
 		grpcRequests: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "task_orchestrator_grpc_server_requests_total",
+			Name: "dispatchd_grpc_server_requests_total",
 			Help: "Count of gRPC requests handled by the service.",
 		}, []string{"service", "method", "kind", "code"}),
 		grpcRequestDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "task_orchestrator_grpc_server_request_duration_seconds",
+			Name:    "dispatchd_grpc_server_request_duration_seconds",
 			Help:    "Latency distribution of gRPC requests handled by the service.",
 			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.25, 0.5, 1, 2, 5},
 		}, []string{"service", "method", "kind"}),
 		jobOperations: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "task_orchestrator_job_operations_total",
+			Name: "dispatchd_job_operations_total",
 			Help: "Count of control-plane job operations by outcome.",
 		}, []string{"service", "operation", "outcome"}),
 		workerEvents: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "task_orchestrator_worker_events_total",
+			Name: "dispatchd_worker_events_total",
 			Help: "Count of worker stream events by outcome.",
 		}, []string{"service", "event", "outcome"}),
 		schedulerTicks: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "task_orchestrator_scheduler_ticks_total",
+			Name: "dispatchd_scheduler_ticks_total",
 			Help: "Count of scheduler ticks by outcome.",
 		}, []string{"service", "outcome"}),
 		schedulerTickLatency: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Name:    "task_orchestrator_scheduler_tick_duration_seconds",
+			Name:    "dispatchd_scheduler_tick_duration_seconds",
 			Help:    "Duration of scheduler reconciliation ticks.",
 			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5},
 		}),
 		schedulerRequeued: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "task_orchestrator_scheduler_requeued_total",
+			Name: "dispatchd_scheduler_requeued_total",
 			Help: "Total number of expired executions requeued by the scheduler.",
 		}),
 		schedulerEnqueued: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "task_orchestrator_scheduler_enqueued_total",
+			Name: "dispatchd_scheduler_enqueued_total",
 			Help: "Total number of runnable executions pushed into ready queues by the scheduler.",
 		}),
 		dispatchEvents: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "task_orchestrator_dispatch_events_total",
+			Name: "dispatchd_dispatch_events_total",
 			Help: "Count of dispatch-side events by outcome.",
 		}, []string{"service", "event", "outcome"}),
 	}
@@ -146,7 +146,7 @@ func Start(ctx context.Context, logger *slog.Logger, cfg config.Service) (*Handl
 	handle.tracerProvider = tracerProvider
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
-	runtime.tracer = otel.Tracer("github.com/gnix0/task-orchestrator/" + cfg.Name)
+	runtime.tracer = otel.Tracer("github.com/gnix0/dispatchd/" + cfg.Name)
 
 	stateMu.Lock()
 	state = runtime

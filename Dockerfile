@@ -19,8 +19,8 @@ FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /app
 
-COPY --from=builder /out/app /app/task-orchestrator
+COPY --from=builder /out/app /app/dispatchd
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/app/task-orchestrator"]
+ENTRYPOINT ["/app/dispatchd"]
