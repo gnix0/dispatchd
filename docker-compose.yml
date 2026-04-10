@@ -34,6 +34,13 @@ services:
       LEASE_DURATION: 30s
       WORKER_HEARTBEAT_TTL: 45s
       INSTANCE_ID: control-plane-compose
+      AUTH_ENABLED: "false"
+      AUTH_JWT_ISSUER: task-orchestrator
+      AUTH_JWT_AUDIENCE: task-orchestrator-clients
+      AUTH_JWT_SHARED_SECRET: change-me-dev
+      AUDIT_LOG_ENABLED: "true"
+      TLS_ENABLED: "false"
+      TLS_REQUIRE_CLIENT_CERT: "false"
     ports:
       - "8080:8080"
     depends_on:
@@ -57,6 +64,13 @@ services:
       LEASE_DURATION: 30s
       WORKER_HEARTBEAT_TTL: 45s
       INSTANCE_ID: scheduler-compose
+      AUTH_ENABLED: "false"
+      AUTH_JWT_ISSUER: task-orchestrator
+      AUTH_JWT_AUDIENCE: task-orchestrator-clients
+      AUTH_JWT_SHARED_SECRET: change-me-dev
+      AUDIT_LOG_ENABLED: "true"
+      TLS_ENABLED: "false"
+      TLS_REQUIRE_CLIENT_CERT: "false"
     depends_on:
       - postgres
       - redis
@@ -79,6 +93,13 @@ services:
       LEASE_DURATION: 30s
       WORKER_HEARTBEAT_TTL: 45s
       INSTANCE_ID: worker-gateway-compose
+      AUTH_ENABLED: "false"
+      AUTH_JWT_ISSUER: task-orchestrator
+      AUTH_JWT_AUDIENCE: task-orchestrator-clients
+      AUTH_JWT_SHARED_SECRET: change-me-dev
+      AUDIT_LOG_ENABLED: "true"
+      TLS_ENABLED: "false"
+      TLS_REQUIRE_CLIENT_CERT: "false"
     ports:
       - "8081:8080"
     depends_on:

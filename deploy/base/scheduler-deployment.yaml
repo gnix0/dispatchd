@@ -40,6 +40,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+          volumeMounts:
+            - name: tls-materials
+              mountPath: /var/run/task-orchestrator/tls
+              readOnly: true
           resources:
             requests:
               cpu: 25m
@@ -47,3 +51,7 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+      volumes:
+        - name: tls-materials
+          secret:
+            secretName: task-orchestrator-tls
