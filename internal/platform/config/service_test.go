@@ -8,6 +8,7 @@ import (
 func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	t.Setenv("APP_ENV", "")
 	t.Setenv("LOG_LEVEL", "")
+	t.Setenv("METRICS_PORT", "")
 	t.Setenv("SHUTDOWN_TIMEOUT_SECONDS", "")
 	t.Setenv("DATABASE_URL", "")
 	t.Setenv("REDIS_ADDRESS", "")
@@ -29,6 +30,10 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	t.Setenv("TLS_KEY_FILE", "")
 	t.Setenv("TLS_CLIENT_CA_FILE", "")
 	t.Setenv("TLS_REQUIRE_CLIENT_CERT", "")
+	t.Setenv("TRACING_ENABLED", "")
+	t.Setenv("OTLP_ENDPOINT", "")
+	t.Setenv("OTLP_INSECURE", "")
+	t.Setenv("TRACE_SAMPLE_RATE", "")
 
 	got := Load("control-plane")
 
@@ -46,6 +51,10 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 
 	if got.GRPCPort != 8080 {
 		t.Fatalf("expected default gRPC port 8080, got %d", got.GRPCPort)
+	}
+
+	if got.MetricsPort != 9100 {
+		t.Fatalf("expected default metrics port 9100, got %d", got.MetricsPort)
 	}
 
 	if got.ShutdownTimeout != 10*time.Second {
@@ -95,12 +104,29 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	if got.TLSEnabled {
 		t.Fatal("expected tls to be disabled by default")
 	}
+
+	if got.TracingEnabled {
+		t.Fatal("expected tracing to be disabled by default")
+	}
+
+	if got.OTLPEndpoint != "jaeger:4317" {
+		t.Fatalf("expected default otlp endpoint jaeger:4317, got %q", got.OTLPEndpoint)
+	}
+
+	if !got.OTLPInsecure {
+		t.Fatal("expected otlp exporter to default to insecure in compose/dev")
+	}
+
+	if got.TraceSampleRate != 1.0 {
+		t.Fatalf("expected default trace sample rate 1.0, got %f", got.TraceSampleRate)
+	}
 }
 
 func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("APP_ENV", "production")
 	t.Setenv("LOG_LEVEL", "debug")
 	t.Setenv("GRPC_PORT", "9090")
+	t.Setenv("METRICS_PORT", "9191")
 	t.Setenv("SHUTDOWN_TIMEOUT_SECONDS", "45")
 	t.Setenv("DATABASE_URL", "postgres://custom")
 	t.Setenv("REDIS_ADDRESS", "redis.example:6380")
@@ -122,6 +148,10 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("TLS_KEY_FILE", "/tls/server.key")
 	t.Setenv("TLS_CLIENT_CA_FILE", "/tls/ca.crt")
 	t.Setenv("TLS_REQUIRE_CLIENT_CERT", "true")
+	t.Setenv("TRACING_ENABLED", "true")
+	t.Setenv("OTLP_ENDPOINT", "otel-collector:4317")
+	t.Setenv("OTLP_INSECURE", "false")
+	t.Setenv("TRACE_SAMPLE_RATE", "0.25")
 
 	got := Load("scheduler")
 
@@ -135,6 +165,10 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 
 	if got.GRPCPort != 9090 {
 		t.Fatalf("expected gRPC port 9090, got %d", got.GRPCPort)
+	}
+
+	if got.MetricsPort != 9191 {
+		t.Fatalf("expected metrics port 9191, got %d", got.MetricsPort)
 	}
 
 	if got.ShutdownTimeout != 45*time.Second {
@@ -211,5 +245,21 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 
 	if !got.TLSRequireClientCert {
 		t.Fatal("expected tls client cert requirement to be enabled")
+	}
+
+	if !got.TracingEnabled {
+		t.Fatal("expected tracing to be enabled")
+	}
+
+	if got.OTLPEndpoint != "otel-collector:4317" {
+		t.Fatalf("expected otlp endpoint override, got %q", got.OTLPEndpoint)
+	}
+
+	if got.OTLPInsecure {
+		t.Fatal("expected otlp insecure override to false")
+	}
+
+	if got.TraceSampleRate != 0.25 {
+		t.Fatalf("expected trace sample rate 0.25, got %f", got.TraceSampleRate)
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	schedulerapp "github.com/gnix0/task-orchestrator/internal/application/scheduler"
 	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/task-orchestrator/internal/platform/observability"
 	runtimeapp "github.com/gnix0/task-orchestrator/internal/platform/runtime"
 	"github.com/gnix0/task-orchestrator/internal/platform/store"
 )
@@ -19,6 +20,19 @@ func main() {
 
 	ctx, stop := runtimeapp.SignalContext()
 	defer stop()
+
+	observabilityHandle, err := observability.Start(context.Background(), logger, serviceConfig)
+	if err != nil {
+		logger.Error("failed to initialize observability", slog.Any("error", err))
+		os.Exit(1)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), serviceConfig.ShutdownTimeout)
+		defer cancel()
+		if err := observabilityHandle.Shutdown(shutdownCtx); err != nil {
+			logger.Warn("observability shutdown failed", slog.Any("error", err))
+		}
+	}()
 
 	sharedStore, err := store.Open(context.Background(), serviceConfig)
 	if err != nil {

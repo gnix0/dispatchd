@@ -128,27 +128,36 @@ This repository models single-region active leadership today. The config boundar
 
 ## Performance & Reliability
 
-The performance and reliability workflow is split into two stages:
+The repository includes a Dockerized performance and observability workflow built around:
 
-- this branch documents the intended SLOs and the execution methodology
-- a follow-up evidence branch will add measured SLIs, dashboard screenshots, and benchmark disclosures after load testing is run against the upgraded distributed stack
+- Prometheus metrics scraping
+- Grafana dashboards
+- Jaeger trace collection through OTLP
+- `k6` gRPC load generation for the control-plane unary path
+- a dedicated `perf-worker` load client for worker registration and heartbeat pressure
 
-Initial SLOs for the reference Docker Compose environment:
+Reference evidence for the current branch lives under [assets/perf](/home/gnix0/developer/task-orchestrator/assets/perf) and [perf/results](/home/gnix0/developer/task-orchestrator/perf/results).
 
-- `SubmitJob` availability: `>= 99.9%`
-- `SubmitJob` latency: `p95 < 75 ms`, `p99 < 150 ms`
-- `GetJob` latency: `p95 < 40 ms`
-- worker heartbeat acknowledgement latency: `p95 < 50 ms`, error rate `< 0.1%`
-- submit-to-first-assignment latency: `p95 < 3 s`
-- retry scheduling correctness: `100%` of retries follow the configured backoff policy
-- dead-letter correctness: retry exhaustion always yields a terminal dead-lettered execution with no duplicate retry creation
+Supported SLOs for the current evidence set:
 
-The later evidence pass should publish:
+- control-plane unary gRPC availability: `>= 99.9%`
+- control-plane unary gRPC latency: `p95 < 50 ms` in the reference Docker Compose environment
+- worker heartbeat acknowledgement latency: `p95 < 50 ms`
+- worker heartbeat error rate: `< 0.1%`
 
-- measured latency and throughput charts
-- error-rate and recovery screenshots
-- scheduler failover drill evidence
-- explicit environment notes so the disclosed SLIs are reproducible and bounded
+Measured SLIs from the captured runs:
+
+- control-plane smoke run: `5548` iterations, `100%` checks passed, `grpc_req_duration avg 5.16 ms`, `p95 13.30 ms`
+- control-plane stress run: `266330` iterations, `100%` checks passed, `443.81 iterations/s`, `grpc_req_duration avg 16.71 ms`, `p95 43.74 ms`
+- worker heartbeat smoke run: `180` heartbeats, `0` errors, `avg ack 9.67 ms`, `p95 12.85 ms`, `p99 14.33 ms`
+- worker heartbeat stress run: `112801` heartbeats, `0` errors, `avg ack 10.34 ms`, `p95 28.27 ms`, `p99 54.04 ms`
+
+Evidence currently checked into the repository includes:
+
+- Grafana request-rate and latency captures such as [grafana_grpc_req_rate.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_grpc_req_rate.png) and [grafana_grpc_p95_latency.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_grpc_p95_latency.png)
+- worker and scheduler activity captures such as [grafana_worker_stream_events.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_worker_stream_events.png), [grafana_dispatch_events.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_dispatch_events.png), and [grafana_scheduler_ticks_avg_duration.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_scheduler_ticks_avg_duration.png)
+
+The currently published SLI set is intentionally limited to the portions of the system that were directly measured in the checked-in evidence. It does not claim submit-to-assignment latency, end-to-end execution latency, or retry/dead-letter timing because those were not benchmarked explicitly in this evidence set.
 
 ## DevSecOps
 
@@ -210,6 +219,15 @@ make compose-up
 make compose-down
 make backup-postgres
 make failover-smoke
+```
+
+Observability and performance workflows:
+
+```bash
+make perf-stack-up
+make perf-k6-smoke
+make perf-worker-smoke
+make perf-stack-down
 ```
 
 Kubernetes workflows:

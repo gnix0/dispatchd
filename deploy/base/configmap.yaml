@@ -17,3 +17,7 @@ data:
   AUDIT_LOG_ENABLED: "true"
   TLS_ENABLED: "false"
   TLS_REQUIRE_CLIENT_CERT: "false"
+  TRACING_ENABLED: "true"
+  OTLP_ENDPOINT: jaeger-collector.observability.svc.cluster.local:4317
+  OTLP_INSECURE: "true"
+  TRACE_SAMPLE_RATE: "1.0"

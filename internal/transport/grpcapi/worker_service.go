@@ -7,7 +7,9 @@ import (
 	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
 	"github.com/gnix0/task-orchestrator/internal/application/jobs"
 	"github.com/gnix0/task-orchestrator/internal/application/workers"
+	"github.com/gnix0/task-orchestrator/internal/platform/observability"
 	"github.com/gnix0/task-orchestrator/internal/platform/security"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,8 +35,14 @@ func RegisterWorkerGateway(workerApplication workers.Service, dispatchService jo
 	}
 }
 
-func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectServer) error {
+func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectServer) (err error) {
 	var streamWorkerID string
+	started := time.Now()
+	ctx, span := observability.StartSpan(stream.Context(), "worker_gateway.connect")
+	defer func() {
+		span.End()
+		observability.RecordGRPCRequest("stream", "/taskorchestrator.v1.WorkerService/Connect", started, err)
+	}()
 
 	for {
 		request, err := stream.Recv()
@@ -47,93 +55,135 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 
 		switch payload := request.GetPayload().(type) {
 		case *taskorchestratorv1.ConnectRequest_Registration:
-			if err := security.ValidateWorkerIdentity(stream.Context(), payload.Registration.GetWorkerId()); err != nil {
-				return err
-			}
-			worker, err := s.workerApplication.Register(stream.Context(), workers.RegisterInput{
-				WorkerID:       payload.Registration.GetWorkerId(),
-				Capabilities:   payload.Registration.GetCapabilities(),
-				MaxConcurrency: payload.Registration.GetMaxConcurrency(),
-				Labels:         payload.Registration.GetLabels(),
-			})
-			if err != nil {
-				return toStatusError(err)
-			}
+			spanCtx, eventSpan := observability.StartSpan(ctx, "worker_gateway.registration",
+				attribute.String("worker.id", payload.Registration.GetWorkerId()),
+			)
+			eventErr := func() error {
+				if err := security.ValidateWorkerIdentity(spanCtx, payload.Registration.GetWorkerId()); err != nil {
+					return err
+				}
+				worker, err := s.workerApplication.Register(spanCtx, workers.RegisterInput{
+					WorkerID:       payload.Registration.GetWorkerId(),
+					Capabilities:   payload.Registration.GetCapabilities(),
+					MaxConcurrency: payload.Registration.GetMaxConcurrency(),
+					Labels:         payload.Registration.GetLabels(),
+				})
+				if err != nil {
+					return toStatusError(err)
+				}
 
-			streamWorkerID = worker.ID
-			if err := stream.Send(newWorkerAck(worker.ID, "worker registered")); err != nil {
-				return err
-			}
-			if err := s.sendAssignments(stream, worker); err != nil {
-				return err
+				streamWorkerID = worker.ID
+				if err := stream.Send(newWorkerAck(worker.ID, "worker registered")); err != nil {
+					return err
+				}
+				return s.sendAssignments(stream, worker)
+			}()
+			eventSpan.End()
+			observability.RecordWorkerEvent("registration", eventErr)
+			if eventErr != nil {
+				return eventErr
 			}
 		case *taskorchestratorv1.ConnectRequest_Heartbeat:
 			workerID := payload.Heartbeat.GetWorkerId()
 			if workerID == "" {
 				workerID = streamWorkerID
 			}
-			if err := security.ValidateWorkerIdentity(stream.Context(), workerID); err != nil {
-				return err
-			}
+			spanCtx, eventSpan := observability.StartSpan(ctx, "worker_gateway.heartbeat",
+				attribute.String("worker.id", workerID),
+			)
+			eventErr := func() error {
+				if err := security.ValidateWorkerIdentity(spanCtx, workerID); err != nil {
+					return err
+				}
 
-			worker, err := s.workerApplication.Heartbeat(stream.Context(), workers.HeartbeatInput{
-				WorkerID:           workerID,
-				Status:             fromProtoWorkerStatus(payload.Heartbeat.GetStatus()),
-				InflightExecutions: payload.Heartbeat.GetInflightExecutions(),
-			})
-			if err != nil {
-				return toStatusError(err)
-			}
-			if err := s.dispatchService.RenewLeasesForWorker(stream.Context(), worker.ID, s.leaseDuration); err != nil {
-				return toStatusError(err)
-			}
+				worker, err := s.workerApplication.Heartbeat(spanCtx, workers.HeartbeatInput{
+					WorkerID:           workerID,
+					Status:             fromProtoWorkerStatus(payload.Heartbeat.GetStatus()),
+					InflightExecutions: payload.Heartbeat.GetInflightExecutions(),
+				})
+				if err != nil {
+					return toStatusError(err)
+				}
+				if err := s.dispatchService.RenewLeasesForWorker(spanCtx, worker.ID, s.leaseDuration); err != nil {
+					observability.RecordDispatchEvent("lease_renewal", err)
+					return toStatusError(err)
+				}
+				observability.RecordDispatchEvent("lease_renewal", nil)
 
-			streamWorkerID = worker.ID
-			if err := stream.Send(newWorkerAck(worker.ID, "heartbeat accepted")); err != nil {
-				return err
-			}
-			if err := s.sendAssignments(stream, worker); err != nil {
-				return err
+				streamWorkerID = worker.ID
+				if err := stream.Send(newWorkerAck(worker.ID, "heartbeat accepted")); err != nil {
+					return err
+				}
+				return s.sendAssignments(stream, worker)
+			}()
+			eventSpan.End()
+			observability.RecordWorkerEvent("heartbeat", eventErr)
+			if eventErr != nil {
+				return eventErr
 			}
 		case *taskorchestratorv1.ConnectRequest_Result:
 			workerID := streamWorkerID
 			if workerID == "" {
 				workerID = payload.Result.GetMetadata()["worker_id"]
 			}
-			if err := security.ValidateWorkerIdentity(stream.Context(), workerID); err != nil {
-				return err
-			}
+			spanCtx, eventSpan := observability.StartSpan(ctx, "worker_gateway.result",
+				attribute.String("worker.id", workerID),
+				attribute.String("execution.id", payload.Result.GetExecutionId()),
+			)
+			eventErr := func() error {
+				if err := security.ValidateWorkerIdentity(spanCtx, workerID); err != nil {
+					return err
+				}
 
-			if payload.Result.GetSuccess() {
-				if _, _, err := s.dispatchService.CompleteExecution(stream.Context(), jobs.CompleteExecutionInput{
-					ExecutionID: payload.Result.GetExecutionId(),
-					WorkerID:    workerID,
-					Metadata:    payload.Result.GetMetadata(),
-				}); err != nil {
-					return toStatusError(err)
+				if payload.Result.GetSuccess() {
+					if _, _, err := s.dispatchService.CompleteExecution(spanCtx, jobs.CompleteExecutionInput{
+						ExecutionID: payload.Result.GetExecutionId(),
+						WorkerID:    workerID,
+						Metadata:    payload.Result.GetMetadata(),
+					}); err != nil {
+						observability.RecordDispatchEvent("complete_execution", err)
+						return toStatusError(err)
+					}
+					observability.RecordDispatchEvent("complete_execution", nil)
+				} else {
+					if _, _, _, err := s.dispatchService.FailExecution(spanCtx, jobs.FailExecutionInput{
+						ExecutionID:  payload.Result.GetExecutionId(),
+						WorkerID:     workerID,
+						ErrorMessage: payload.Result.GetErrorMessage(),
+						Metadata:     payload.Result.GetMetadata(),
+					}); err != nil {
+						observability.RecordDispatchEvent("fail_execution", err)
+						return toStatusError(err)
+					}
+					observability.RecordDispatchEvent("fail_execution", nil)
 				}
-			} else {
-				if _, _, _, err := s.dispatchService.FailExecution(stream.Context(), jobs.FailExecutionInput{
-					ExecutionID:  payload.Result.GetExecutionId(),
-					WorkerID:     workerID,
-					ErrorMessage: payload.Result.GetErrorMessage(),
-					Metadata:     payload.Result.GetMetadata(),
-				}); err != nil {
-					return toStatusError(err)
-				}
-			}
-			if err := stream.Send(newExecutionAck(payload.Result.GetExecutionId(), workerID, "result accepted")); err != nil {
-				return err
+				return stream.Send(newExecutionAck(payload.Result.GetExecutionId(), workerID, "result accepted"))
+			}()
+			eventSpan.End()
+			observability.RecordWorkerEvent("result", eventErr)
+			if eventErr != nil {
+				return eventErr
 			}
 		case *taskorchestratorv1.ConnectRequest_LogChunk:
-			if err := security.ValidateWorkerIdentity(stream.Context(), streamWorkerID); err != nil {
-				return err
-			}
-			if err := stream.Send(newExecutionAck(payload.LogChunk.GetExecutionId(), streamWorkerID, "log accepted")); err != nil {
-				return err
+			spanCtx, eventSpan := observability.StartSpan(ctx, "worker_gateway.log_chunk",
+				attribute.String("worker.id", streamWorkerID),
+				attribute.String("execution.id", payload.LogChunk.GetExecutionId()),
+			)
+			eventErr := func() error {
+				if err := security.ValidateWorkerIdentity(spanCtx, streamWorkerID); err != nil {
+					return err
+				}
+				return stream.Send(newExecutionAck(payload.LogChunk.GetExecutionId(), streamWorkerID, "log accepted"))
+			}()
+			eventSpan.End()
+			observability.RecordWorkerEvent("log_chunk", eventErr)
+			if eventErr != nil {
+				return eventErr
 			}
 		default:
-			return status.Error(codes.InvalidArgument, "connect payload is required")
+			err := status.Error(codes.InvalidArgument, "connect payload is required")
+			observability.RecordWorkerEvent("unknown_payload", err)
+			return err
 		}
 	}
 }
@@ -175,19 +225,24 @@ func (s *WorkerService) sendAssignments(stream taskorchestratorv1.WorkerService_
 			InflightExecutions: worker.InflightExecutions + int32(i),
 		}, s.leaseDuration)
 		if err != nil {
+			observability.RecordDispatchEvent("claim_assignment", err)
 			return toStatusError(err)
 		}
 		if assignment == nil {
 			return nil
 		}
+		observability.RecordDispatchEvent("claim_assignment", nil)
 
 		if err := stream.Send(toAssignmentResponse(assignment)); err != nil {
+			observability.RecordDispatchEvent("assignment_delivery", err)
 			releaseErr := s.dispatchService.ReleaseExecution(stream.Context(), assignment.ExecutionID, "assignment delivery failed")
 			if releaseErr != nil {
+				observability.RecordDispatchEvent("release_execution", releaseErr)
 				return releaseErr
 			}
 			return err
 		}
+		observability.RecordDispatchEvent("assignment_delivery", nil)
 	}
 
 	return nil

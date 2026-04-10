@@ -10,7 +10,9 @@ IMAGE_TAG ?= dev
 	docker-build-control-plane docker-build-scheduler docker-build-worker-gateway \
 	compose-config compose-up compose-down k8s-render k8s-validate argocd-render \
 	k8s-render-staging k8s-render-prod \
-	kind-up kind-down gitops-update-dev backup-postgres restore-postgres failover-smoke
+	kind-up kind-down gitops-update-dev backup-postgres restore-postgres failover-smoke \
+	perf-stack-up perf-stack-down perf-k6-smoke perf-k6-average perf-k6-stress \
+	perf-worker-smoke perf-worker-average perf-worker-stress
 
 fmt:
 	go fmt ./...
@@ -86,3 +88,27 @@ restore-postgres:
 
 failover-smoke:
 	./scripts/failover-smoke.sh
+
+perf-stack-up:
+	docker compose up --build -d
+
+perf-stack-down:
+	docker compose down --remove-orphans
+
+perf-k6-smoke:
+	./scripts/perf-k6.sh smoke
+
+perf-k6-average:
+	./scripts/perf-k6.sh average
+
+perf-k6-stress:
+	./scripts/perf-k6.sh stress
+
+perf-worker-smoke:
+	./scripts/perf-worker-load.sh smoke
+
+perf-worker-average:
+	./scripts/perf-worker-load.sh average
+
+perf-worker-stress:
+	./scripts/perf-worker-load.sh stress

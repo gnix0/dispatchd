@@ -16,6 +16,44 @@ services:
     ports:
       - "6379:6379"
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.63.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - control-plane
+      - scheduler
+      - worker-gateway
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
   control-plane:
     image: ghcr.io/gnix0/task-orchestrator-control-plane:dev
     build:
@@ -27,6 +65,7 @@ services:
       APP_ENV: compose
       LOG_LEVEL: debug
       GRPC_PORT: "8080"
+      METRICS_PORT: "9100"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
       REDIS_ADDRESS: redis:6379
@@ -41,11 +80,17 @@ services:
       AUDIT_LOG_ENABLED: "true"
       TLS_ENABLED: "false"
       TLS_REQUIRE_CLIENT_CERT: "false"
+      TRACING_ENABLED: "true"
+      OTLP_ENDPOINT: jaeger:4317
+      OTLP_INSECURE: "true"
+      TRACE_SAMPLE_RATE: "1.0"
     ports:
       - "8080:8080"
+      - "9100:9100"
     depends_on:
       - postgres
       - redis
+      - jaeger
 
   scheduler:
     image: ghcr.io/gnix0/task-orchestrator-scheduler:dev
@@ -57,6 +102,7 @@ services:
     environment:
       APP_ENV: compose
       LOG_LEVEL: debug
+      METRICS_PORT: "9101"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
       REDIS_ADDRESS: redis:6379
@@ -71,9 +117,16 @@ services:
       AUDIT_LOG_ENABLED: "true"
       TLS_ENABLED: "false"
       TLS_REQUIRE_CLIENT_CERT: "false"
+      TRACING_ENABLED: "true"
+      OTLP_ENDPOINT: jaeger:4317
+      OTLP_INSECURE: "true"
+      TRACE_SAMPLE_RATE: "1.0"
+    ports:
+      - "9101:9101"
     depends_on:
       - postgres
       - redis
+      - jaeger
 
   worker-gateway:
     image: ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
@@ -86,6 +139,7 @@ services:
       APP_ENV: compose
       LOG_LEVEL: debug
       GRPC_PORT: "8080"
+      METRICS_PORT: "9102"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
       REDIS_ADDRESS: redis:6379
@@ -100,11 +154,17 @@ services:
       AUDIT_LOG_ENABLED: "true"
       TLS_ENABLED: "false"
       TLS_REQUIRE_CLIENT_CERT: "false"
+      TRACING_ENABLED: "true"
+      OTLP_ENDPOINT: jaeger:4317
+      OTLP_INSECURE: "true"
+      TRACE_SAMPLE_RATE: "1.0"
     ports:
       - "8081:8080"
+      - "9102:9102"
     depends_on:
       - postgres
       - redis
+      - jaeger
 
 volumes:
   postgres-data:

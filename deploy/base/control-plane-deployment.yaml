@@ -38,6 +38,8 @@ spec:
           env:
             - name: GRPC_PORT
               value: "8080"
+            - name: METRICS_PORT
+              value: "9100"
             - name: INSTANCE_ID
               valueFrom:
                 fieldRef:
@@ -45,6 +47,8 @@ spec:
           ports:
             - name: grpc
               containerPort: 8080
+            - name: metrics
+              containerPort: 9100
           volumeMounts:
             - name: tls-materials
               mountPath: /var/run/task-orchestrator/tls

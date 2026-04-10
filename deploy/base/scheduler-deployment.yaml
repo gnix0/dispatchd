@@ -36,10 +36,15 @@ spec:
             - secretRef:
                 name: task-orchestrator-secrets
           env:
+            - name: METRICS_PORT
+              value: "9101"
             - name: INSTANCE_ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+          ports:
+            - name: metrics
+              containerPort: 9101
           volumeMounts:
             - name: tls-materials
               mountPath: /var/run/task-orchestrator/tls

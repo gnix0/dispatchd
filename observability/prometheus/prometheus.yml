@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: control-plane
+    static_configs:
+      - targets: ["control-plane:9100"]
+        labels:
+          service: control-plane
+
+  - job_name: scheduler
+    static_configs:
+      - targets: ["scheduler:9101"]
+        labels:
+          service: scheduler
+
+  - job_name: worker-gateway
+    static_configs:
+      - targets: ["worker-gateway:9102"]
+        labels:
+          service: worker-gateway
