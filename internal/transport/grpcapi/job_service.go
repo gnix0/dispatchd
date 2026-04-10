@@ -2,9 +2,11 @@ package grpcapi
 
 import (
 	"context"
+	"time"
 
 	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
 	"github.com/gnix0/task-orchestrator/internal/application/jobs"
+	"github.com/gnix0/task-orchestrator/internal/platform/observability"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -23,8 +25,16 @@ func RegisterControlPlane(jobApplication jobs.Service) func(*grpc.Server) {
 	}
 }
 
-func (s *JobService) SubmitJob(ctx context.Context, request *taskorchestratorv1.SubmitJobRequest) (*taskorchestratorv1.SubmitJobResponse, error) {
-	job, err := s.jobApplication.SubmitJob(ctx, jobs.SubmitJobInput{
+func (s *JobService) SubmitJob(ctx context.Context, request *taskorchestratorv1.SubmitJobRequest) (_ *taskorchestratorv1.SubmitJobResponse, err error) {
+	started := time.Now()
+	ctx, span := observability.StartSpan(ctx, "controlplane.submit_job")
+	defer func() {
+		span.End()
+		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/SubmitJob", started, err)
+		observability.RecordJobOperation("submit", err)
+	}()
+
+	job, submitErr := s.jobApplication.SubmitJob(ctx, jobs.SubmitJobInput{
 		JobType:        request.GetJobType(),
 		Payload:        request.GetPayload(),
 		Priority:       request.GetPriority(),
@@ -36,35 +46,63 @@ func (s *JobService) SubmitJob(ctx context.Context, request *taskorchestratorv1.
 			MaxBackoff:     request.GetRetryPolicy().GetMaxBackoff().AsDuration(),
 		},
 	})
-	if err != nil {
-		return nil, toStatusError(err)
+	if submitErr != nil {
+		err = toStatusError(submitErr)
+		return nil, err
 	}
 
 	return &taskorchestratorv1.SubmitJobResponse{Job: toProtoJob(job)}, nil
 }
 
-func (s *JobService) CancelJob(ctx context.Context, request *taskorchestratorv1.CancelJobRequest) (*taskorchestratorv1.CancelJobResponse, error) {
-	job, err := s.jobApplication.CancelJob(ctx, request.GetJobId())
-	if err != nil {
-		return nil, toStatusError(err)
+func (s *JobService) CancelJob(ctx context.Context, request *taskorchestratorv1.CancelJobRequest) (_ *taskorchestratorv1.CancelJobResponse, err error) {
+	started := time.Now()
+	ctx, span := observability.StartSpan(ctx, "controlplane.cancel_job")
+	defer func() {
+		span.End()
+		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/CancelJob", started, err)
+		observability.RecordJobOperation("cancel", err)
+	}()
+
+	job, cancelErr := s.jobApplication.CancelJob(ctx, request.GetJobId())
+	if cancelErr != nil {
+		err = toStatusError(cancelErr)
+		return nil, err
 	}
 
 	return &taskorchestratorv1.CancelJobResponse{Job: toProtoJob(job)}, nil
 }
 
-func (s *JobService) GetJob(ctx context.Context, request *taskorchestratorv1.GetJobRequest) (*taskorchestratorv1.GetJobResponse, error) {
-	job, err := s.jobApplication.GetJob(ctx, request.GetJobId())
-	if err != nil {
-		return nil, toStatusError(err)
+func (s *JobService) GetJob(ctx context.Context, request *taskorchestratorv1.GetJobRequest) (_ *taskorchestratorv1.GetJobResponse, err error) {
+	started := time.Now()
+	ctx, span := observability.StartSpan(ctx, "controlplane.get_job")
+	defer func() {
+		span.End()
+		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/GetJob", started, err)
+		observability.RecordJobOperation("get", err)
+	}()
+
+	job, getErr := s.jobApplication.GetJob(ctx, request.GetJobId())
+	if getErr != nil {
+		err = toStatusError(getErr)
+		return nil, err
 	}
 
 	return &taskorchestratorv1.GetJobResponse{Job: toProtoJob(job)}, nil
 }
 
-func (s *JobService) ListExecutions(ctx context.Context, request *taskorchestratorv1.ListExecutionsRequest) (*taskorchestratorv1.ListExecutionsResponse, error) {
-	executions, err := s.jobApplication.ListExecutions(ctx, request.GetJobId())
-	if err != nil {
-		return nil, toStatusError(err)
+func (s *JobService) ListExecutions(ctx context.Context, request *taskorchestratorv1.ListExecutionsRequest) (_ *taskorchestratorv1.ListExecutionsResponse, err error) {
+	started := time.Now()
+	ctx, span := observability.StartSpan(ctx, "controlplane.list_executions")
+	defer func() {
+		span.End()
+		observability.RecordGRPCRequest("unary", "/taskorchestrator.v1.JobService/ListExecutions", started, err)
+		observability.RecordJobOperation("list_executions", err)
+	}()
+
+	executions, listErr := s.jobApplication.ListExecutions(ctx, request.GetJobId())
+	if listErr != nil {
+		err = toStatusError(listErr)
+		return nil, err
 	}
 
 	response := &taskorchestratorv1.ListExecutionsResponse{

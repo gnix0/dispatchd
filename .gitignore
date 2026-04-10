@@ -6,3 +6,5 @@ dist/
 coverage.out
 .env
 .env.*
+perf/results/*.json
+perf/results/*.txt

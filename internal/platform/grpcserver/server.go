@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/task-orchestrator/internal/platform/observability"
 	"github.com/gnix0/task-orchestrator/internal/platform/security"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -40,6 +41,7 @@ func Run(ctx context.Context, logger *slog.Logger, serviceConfig config.Service,
 
 	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 	logger.Info("gRPC server listening", slog.String("service", serviceConfig.Name), slog.String("address", serviceConfig.GRPCAddress()))
+	observability.RecordDispatchEvent("grpc_server_started", nil)
 
 	serveErr := make(chan error, 1)
 	go func() {

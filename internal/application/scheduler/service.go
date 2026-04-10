@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/gnix0/task-orchestrator/internal/application/jobs"
+	"github.com/gnix0/task-orchestrator/internal/platform/observability"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Service struct {
@@ -58,8 +60,20 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) Tick(ctx context.Context) (bool, error) {
-	isLeader, err := s.store.TryAcquireLeadership(ctx, s.instanceID, s.pollInterval*3)
+func (s *Service) Tick(ctx context.Context) (isLeader bool, err error) {
+	started := time.Now()
+	requeued := 0
+	enqueued := 0
+
+	ctx, span := observability.StartSpan(ctx, "scheduler.tick",
+		attribute.String("scheduler.instance_id", s.instanceID),
+	)
+	defer func() {
+		span.End()
+		observability.RecordSchedulerTick(time.Since(started), isLeader, requeued, enqueued, err)
+	}()
+
+	isLeader, err = s.store.TryAcquireLeadership(ctx, s.instanceID, s.pollInterval*3)
 	if err != nil {
 		return false, err
 	}
@@ -68,12 +82,12 @@ func (s *Service) Tick(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	requeued, err := s.store.RequeueExpiredExecutions(ctx, s.workerTTL, 256)
+	requeued, err = s.store.RequeueExpiredExecutions(ctx, s.workerTTL, 256)
 	if err != nil {
 		return false, err
 	}
 
-	enqueued, err := s.store.EnqueueRunnableExecutions(ctx, 256)
+	enqueued, err = s.store.EnqueueRunnableExecutions(ctx, 256)
 	if err != nil {
 		return false, err
 	}

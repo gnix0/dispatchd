@@ -269,6 +269,9 @@ func (s *Store) TryAcquireLeadership(ctx context.Context, instanceID string, ttl
 		Mode: "NX",
 	})
 	acquired, err := status.Result()
+	if err == redis.Nil {
+		err = nil
+	}
 	if err != nil {
 		return false, fmt.Errorf("acquire leader lock: %w", err)
 	}

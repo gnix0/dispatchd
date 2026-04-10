@@ -14,6 +14,7 @@ type Service struct {
 	Environment           string
 	LogLevel              string
 	GRPCPort              int
+	MetricsPort           int
 	ShutdownTimeout       time.Duration
 	DatabaseURL           string
 	RedisAddress          string
@@ -36,6 +37,10 @@ type Service struct {
 	TLSKeyFile            string
 	TLSClientCAFile       string
 	TLSRequireClientCert  bool
+	TracingEnabled        bool
+	OTLPEndpoint          string
+	OTLPInsecure          bool
+	TraceSampleRate       float64
 }
 
 func Load(serviceName string) Service {
@@ -52,6 +57,7 @@ func Load(serviceName string) Service {
 		Environment:           getEnv("APP_ENV", "development"),
 		LogLevel:              getEnv("LOG_LEVEL", "info"),
 		GRPCPort:              getIntEnv("GRPC_PORT", 8080),
+		MetricsPort:           getIntEnv("METRICS_PORT", defaultMetricsPort(serviceName)),
 		ShutdownTimeout:       getDurationEnv("SHUTDOWN_TIMEOUT_SECONDS", defaultShutdownTimeout),
 		DatabaseURL:           getEnv("DATABASE_URL", "postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable"),
 		RedisAddress:          getEnv("REDIS_ADDRESS", "redis:6379"),
@@ -74,11 +80,32 @@ func Load(serviceName string) Service {
 		TLSKeyFile:            getEnv("TLS_KEY_FILE", "/var/run/task-orchestrator/tls/tls.key"),
 		TLSClientCAFile:       getEnv("TLS_CLIENT_CA_FILE", "/var/run/task-orchestrator/tls/ca.crt"),
 		TLSRequireClientCert:  getBoolEnv("TLS_REQUIRE_CLIENT_CERT", false),
+		TracingEnabled:        getBoolEnv("TRACING_ENABLED", false),
+		OTLPEndpoint:          getEnv("OTLP_ENDPOINT", "jaeger:4317"),
+		OTLPInsecure:          getBoolEnv("OTLP_INSECURE", true),
+		TraceSampleRate:       getFloatEnv("TRACE_SAMPLE_RATE", 1.0),
 	}
 }
 
 func (s Service) GRPCAddress() string {
 	return ":" + strconv.Itoa(s.GRPCPort)
+}
+
+func (s Service) MetricsAddress() string {
+	return ":" + strconv.Itoa(s.MetricsPort)
+}
+
+func defaultMetricsPort(serviceName string) int {
+	switch strings.TrimSpace(serviceName) {
+	case "control-plane":
+		return 9100
+	case "scheduler":
+		return 9101
+	case "worker-gateway":
+		return 9102
+	default:
+		return 9100
+	}
 }
 
 func getEnv(key, fallback string) string {
@@ -140,6 +167,20 @@ func getBoolEnv(key string, fallback bool) bool {
 
 	value, err := strconv.ParseBool(rawValue)
 	if err != nil {
+		return fallback
+	}
+
+	return value
+}
+
+func getFloatEnv(key string, fallback float64) float64 {
+	rawValue := strings.TrimSpace(os.Getenv(key))
+	if rawValue == "" {
+		return fallback
+	}
+
+	value, err := strconv.ParseFloat(rawValue, 64)
+	if err != nil || value < 0 || value > 1 {
 		return fallback
 	}
 
