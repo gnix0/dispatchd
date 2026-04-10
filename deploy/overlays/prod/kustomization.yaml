@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: task-orchestrator-prod
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - pdb.yaml
+
+patches:
+  - path: control-plane-service-patch.yaml
+    target:
+      kind: Service
+      name: control-plane
+  - path: worker-gateway-service-patch.yaml
+    target:
+      kind: Service
+      name: worker-gateway
+
+images:
+  - name: ghcr.io/gnix0/task-orchestrator-control-plane:dev
+    newName: ghcr.io/gnix0/task-orchestrator-control-plane
+    newTag: prod
+  - name: ghcr.io/gnix0/task-orchestrator-scheduler:dev
+    newName: ghcr.io/gnix0/task-orchestrator-scheduler
+    newTag: prod
+  - name: ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
+    newName: ghcr.io/gnix0/task-orchestrator-worker-gateway
+    newTag: prod

@@ -1,21 +1,22 @@
 # task-orchestrator
 
-Distributed task orchestration platform in Go built around gRPC contracts, containerized delivery, Kustomize-based GitOps, and an Argo CD deployment path.
+Distributed task orchestration platform in Go built around gRPC contracts, shared Postgres and Redis state, Kustomize-based GitOps delivery, and an Argo CD deployment path.
 
 ## Architecture
 
-The system is organized around three runtime roles:
+The runtime is organized around three service roles:
 
-- `control-plane`: accepts job submissions and exposes query APIs
-- `scheduler`: claims runnable executions, applies retry policy, and decides terminal failure
-- `worker-gateway`: manages bidirectional worker streams for registration, heartbeats, and task feedback
+- `control-plane`: accepts job submissions, serves query APIs, and persists job state
+- `scheduler`: reconciles runnable and expired executions, maintains queue readiness, and holds the active scheduling lease
+- `worker-gateway`: manages bidirectional worker streams for registration, heartbeats, assignment delivery, and result feedback
 
-The core domain model is centered on `Job` and `Execution` records:
+The core domain is centered on durable `Job` and `Execution` records:
 
 - a submitted job creates an initial queued execution
-- the scheduler claims runnable executions with a lease window
+- the scheduler moves runnable executions into Redis-backed ready queues
+- workers receive assignments through the gRPC stream and renew execution leases through heartbeats
 - failed executions are retried with bounded exponential backoff
-- jobs transition to a terminal dead-letter path after the retry policy is exhausted
+- retry exhaustion produces a terminal dead-lettered execution
 
 ## Runtime Model
 
@@ -24,7 +25,7 @@ The core domain model is centered on `Job` and `Execution` records:
 The protobuf module under `proto/` defines the external system contract.
 
 - `JobService` exposes submission, cancellation, lookup, and execution history
-- `WorkerService` defines the worker stream protocol
+- `WorkerService` defines the worker control stream used for registration, heartbeat, assignment delivery, results, and acknowledgements
 - generated protobuf and gRPC stubs are committed under `gen/go`
 
 Key message families:
@@ -32,7 +33,16 @@ Key message families:
 - `Job`: submitted work, metadata, priority, and retry policy
 - `Execution`: an individual attempt for a job
 - `RetryPolicy`: max attempts plus backoff configuration
-- `ConnectRequest` / `ConnectResponse`: worker registration, heartbeat, and acknowledgement stream frames
+- `ConnectRequest` / `ConnectResponse`: worker control-plane stream messages
+
+### Shared State
+
+Shared orchestration state is split across two storage layers:
+
+- `Postgres`: source of truth for jobs, executions, retries, idempotency, worker registry data, and execution metadata
+- `Redis`: scheduler leadership lock and ready queues keyed by capability namespace
+
+This allows the control-plane, scheduler, and worker-gateway to coordinate as separate processes instead of relying on process-local memory.
 
 ### Transport
 
@@ -40,48 +50,109 @@ The gRPC transport layer lives under `internal/transport/grpcapi`.
 
 - request payloads are mapped into application-layer inputs
 - application errors are translated into explicit gRPC status codes
+- unary and stream interceptors can enforce JWT-based authentication and role-based authorization
+- worker stream messages validate worker identity against the authenticated principal when security is enabled
 - reflection and standard gRPC health services are registered centrally
 
 ### Application Services
 
 The application layer lives under `internal/application/`.
 
-- `jobs`: job creation, idempotency, execution tracking, and scheduler-facing execution state transitions
-- `scheduler`: polling, claiming, retry scheduling, and dead-letter decisions
-- `workers`: worker registration, heartbeat state, capabilities, labels, and concurrency metadata
+- `jobs`: job creation, idempotency, execution tracking, completion handling, retry scheduling, and dead-letter decisions
+- `scheduler`: single-leader reconciliation of expired leases and runnable execution queueing
+- `workers`: worker registration, heartbeat state, capabilities, labels, concurrency metadata, and dispatch eligibility
 
-The current reference runtime uses in-memory state so the orchestration rules stay isolated from persistence concerns. The deployment topology, CI/CD flow, and security controls are production-shaped; replacing the in-memory stores with shared persistence is the next infrastructure-level evolution, not an architectural rewrite.
+## Security
+
+The repository includes a zero-trust-ready foundation that can be enabled without changing the public API shape:
+
+- JWT authentication and role-based authorization at the gRPC interceptor layer
+- worker identity validation on the bidirectional worker stream
+- audit logging for authenticated gRPC operations
+- TLS and client-certificate validation boundaries in the server bootstrap path
+- Kubernetes secret mounts for JWT material and TLS certificates
+
+Default local development keeps:
+
+- `AUTH_ENABLED=false`
+- `TLS_ENABLED=false`
+
+Security-relevant role mapping is:
+
+- `submitter`: submit jobs
+- `viewer`: query jobs and execution history
+- `operator`: submit, query, cancel, and operate service paths
+- `worker` / `service`: connect through the worker stream
+- `admin`: unrestricted gRPC access
 
 ## Platform And Delivery
 
 ### Containers
 
 - a single multi-stage [Dockerfile](/home/gnix0/developer/task-orchestrator/Dockerfile) builds any service binary through the `SERVICE` build argument
-- [docker-compose.yml](/home/gnix0/developer/task-orchestrator/docker-compose.yml) packages the three services for local container execution
+- [docker-compose.yml](/home/gnix0/developer/task-orchestrator/docker-compose.yml) packages the three services together with Postgres and Redis for local distributed execution
 
 ### Kubernetes
 
-- [deploy/base](/home/gnix0/developer/task-orchestrator/deploy/base) contains reusable Deployments, Services, ConfigMap, ServiceAccount, and NetworkPolicy resources
-- [deploy/overlays/dev](/home/gnix0/developer/task-orchestrator/deploy/overlays/dev) defines the development overlay used by local `kind` clusters and future GitOps updates
+- [deploy/base](/home/gnix0/developer/task-orchestrator/deploy/base) contains reusable Deployments, Services, ConfigMap, Secrets, ServiceAccount, and NetworkPolicy resources
+- [deploy/overlays/dev](/home/gnix0/developer/task-orchestrator/deploy/overlays/dev) defines the development overlay used by local `kind` clusters and GitOps updates
+- [deploy/overlays/staging](/home/gnix0/developer/task-orchestrator/deploy/overlays/staging) defines a promotion-oriented staging overlay
+- [deploy/overlays/prod](/home/gnix0/developer/task-orchestrator/deploy/overlays/prod) defines a production-oriented overlay and PodDisruptionBudgets
 - [deploy/kind/cluster.yaml](/home/gnix0/developer/task-orchestrator/deploy/kind/cluster.yaml) maps NodePorts for local access to the control-plane and worker-gateway
 
 ### GitOps
 
 - image tags are managed through the Kustomize `images` section in the dev overlay
-- [scripts/update-dev-image-tags.sh](/home/gnix0/developer/task-orchestrator/scripts/update-dev-image-tags.sh) updates the overlay tags for automated GitOps PRs
+- [scripts/update-dev-image-tags.sh](/home/gnix0/developer/task-orchestrator/scripts/update-dev-image-tags.sh) updates the dev overlay tags for automated GitOps PRs
 - the release workflow publishes images and opens a PR with updated deployment tags instead of mutating manifests directly on the default branch
 
 ### Argo CD
 
 - [deploy/argocd/dev-application.yaml](/home/gnix0/developer/task-orchestrator/deploy/argocd/dev-application.yaml) defines the dev `Application`
 - [deploy/argocd/project.yaml](/home/gnix0/developer/task-orchestrator/deploy/argocd/project.yaml) defines the Argo CD project boundaries
-- Argo CD targets the `deploy/overlays/dev` path and can self-heal/prune once the repo is connected
+- Argo CD targets the `deploy/overlays/dev` path and can self-heal and prune once the repo is connected
 
 If you fork or rename the repository, update the Argo CD `repoURL` fields to match the canonical Git URL for your deployment source.
 
+## High Availability And DR
+
+The repository now carries the first HA/DR-oriented operational assets:
+
+- scheduler leadership is coordinated through Redis so only one active scheduler instance reconciles work per environment
+- staging and production Kustomize overlays separate promotion targets from development
+- production PodDisruptionBudgets keep the core services available during voluntary disruptions
+- Postgres backup and restore helpers live in [backup-postgres.sh](/home/gnix0/developer/task-orchestrator/scripts/backup-postgres.sh) and [restore-postgres.sh](/home/gnix0/developer/task-orchestrator/scripts/restore-postgres.sh)
+- a scheduler restart drill lives in [failover-smoke.sh](/home/gnix0/developer/task-orchestrator/scripts/failover-smoke.sh)
+
+This repository models single-region active leadership today. The config boundaries and overlays are structured so failover and environment promotion can be exercised explicitly rather than hidden in manual operator steps.
+
+## Performance & Reliability
+
+The performance and reliability workflow is split into two stages:
+
+- this branch documents the intended SLOs and the execution methodology
+- a follow-up evidence branch will add measured SLIs, dashboard screenshots, and benchmark disclosures after load testing is run against the upgraded distributed stack
+
+Initial SLOs for the reference Docker Compose environment:
+
+- `SubmitJob` availability: `>= 99.9%`
+- `SubmitJob` latency: `p95 < 75 ms`, `p99 < 150 ms`
+- `GetJob` latency: `p95 < 40 ms`
+- worker heartbeat acknowledgement latency: `p95 < 50 ms`, error rate `< 0.1%`
+- submit-to-first-assignment latency: `p95 < 3 s`
+- retry scheduling correctness: `100%` of retries follow the configured backoff policy
+- dead-letter correctness: retry exhaustion always yields a terminal dead-lettered execution with no duplicate retry creation
+
+The later evidence pass should publish:
+
+- measured latency and throughput charts
+- error-rate and recovery screenshots
+- scheduler failover drill evidence
+- explicit environment notes so the disclosed SLIs are reproducible and bounded
+
 ## DevSecOps
 
-The repository includes a dedicated delivery/security layer:
+The repository includes a dedicated delivery and security layer:
 
 - `SAST`: CodeQL for static analysis of the Go codebase
 - `SCA`: `govulncheck`, Dependabot, and repository-level Trivy filesystem scanning
@@ -97,8 +168,9 @@ Because the core services expose gRPC rather than a browser-oriented HTTP applic
 cmd/                  service entrypoints
 deploy/               Kubernetes base, overlays, kind, and Argo CD manifests
 gen/go/               generated protobuf and gRPC stubs
+integration/          distributed smoke and future environment-level tests
 internal/application/ application use cases
-internal/platform/    shared runtime, config, and gRPC server helpers
+internal/platform/    shared runtime, config, security, store, and gRPC helpers
 internal/transport/   gRPC handlers and protocol mapping
 proto/                protobuf contracts
 scripts/              developer automation helpers
@@ -117,6 +189,12 @@ make lint
 make proto-check
 ```
 
+Distributed smoke:
+
+```bash
+TASK_ORCHESTRATOR_INTEGRATION=1 go test ./integration -run TestDistributedSubmitAssignCompleteFlow -count=1 -v
+```
+
 Protobuf workflows:
 
 ```bash
@@ -130,12 +208,16 @@ Container workflows:
 make compose-config
 make compose-up
 make compose-down
+make backup-postgres
+make failover-smoke
 ```
 
 Kubernetes workflows:
 
 ```bash
 make k8s-render
+make k8s-render-staging
+make k8s-render-prod
 make k8s-validate
 make argocd-render
 make kind-up

@@ -9,7 +9,8 @@ IMAGE_TAG ?= dev
 .PHONY: fmt fmt-check lint test build proto proto-check proto-breaking \
 	docker-build-control-plane docker-build-scheduler docker-build-worker-gateway \
 	compose-config compose-up compose-down k8s-render k8s-validate argocd-render \
-	kind-up kind-down gitops-update-dev
+	k8s-render-staging k8s-render-prod \
+	kind-up kind-down gitops-update-dev backup-postgres restore-postgres failover-smoke
 
 fmt:
 	go fmt ./...
@@ -56,6 +57,12 @@ compose-down:
 k8s-render:
 	kubectl kustomize deploy/overlays/dev
 
+k8s-render-staging:
+	kubectl kustomize deploy/overlays/staging
+
+k8s-render-prod:
+	kubectl kustomize deploy/overlays/prod
+
 k8s-validate:
 	kubectl kustomize deploy/overlays/dev >/dev/null
 
@@ -70,3 +77,12 @@ kind-up:
 
 kind-down:
 	./scripts/kind-down.sh
+
+backup-postgres:
+	./scripts/backup-postgres.sh
+
+restore-postgres:
+	./scripts/restore-postgres.sh
+
+failover-smoke:
+	./scripts/failover-smoke.sh
