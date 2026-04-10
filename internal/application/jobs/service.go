@@ -90,8 +90,47 @@ type Service interface {
 }
 
 type SchedulerStore interface {
-	ClaimNextRunnable(context.Context, time.Duration) (Execution, Job, bool, error)
-	MarkExecutionFailed(context.Context, string, string) (Execution, *Execution, Job, error)
+	TryAcquireLeadership(context.Context, string, time.Duration) (bool, error)
+	RequeueExpiredExecutions(context.Context, time.Duration, int) (int, error)
+	EnqueueRunnableExecutions(context.Context, int) (int, error)
+}
+
+type DispatchService interface {
+	ClaimNextForWorker(context.Context, ClaimForWorkerInput, time.Duration) (*Assignment, error)
+	RenewLeasesForWorker(context.Context, string, time.Duration) error
+	CompleteExecution(context.Context, CompleteExecutionInput) (Execution, Job, error)
+	FailExecution(context.Context, FailExecutionInput) (Execution, *Execution, Job, error)
+	ReleaseExecution(context.Context, string, string) error
+}
+
+type ClaimForWorkerInput struct {
+	WorkerID           string
+	Capabilities       []string
+	MaxConcurrency     int32
+	InflightExecutions int32
+}
+
+type Assignment struct {
+	ExecutionID    string
+	JobID          string
+	JobType        string
+	Payload        []byte
+	Attempt        int32
+	LeaseExpiresAt time.Time
+	IdempotencyKey string
+}
+
+type CompleteExecutionInput struct {
+	ExecutionID string
+	WorkerID    string
+	Metadata    map[string]string
+}
+
+type FailExecutionInput struct {
+	ExecutionID  string
+	WorkerID     string
+	ErrorMessage string
+	Metadata     map[string]string
 }
 
 type InMemoryService struct {

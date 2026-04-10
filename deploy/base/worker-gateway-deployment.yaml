@@ -33,9 +33,15 @@ spec:
           envFrom:
             - configMapRef:
                 name: task-orchestrator-config
+            - secretRef:
+                name: task-orchestrator-secrets
           env:
             - name: GRPC_PORT
               value: "8080"
+            - name: INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           ports:
             - name: grpc
               containerPort: 8080

@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: task_orchestrator
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:8-bookworm
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+
   control-plane:
     image: ghcr.io/gnix0/task-orchestrator-control-plane:dev
     build:
@@ -11,8 +28,17 @@ services:
       LOG_LEVEL: debug
       GRPC_PORT: "8080"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
+      REDIS_ADDRESS: redis:6379
+      SCHEDULER_POLL_INTERVAL: 2s
+      LEASE_DURATION: 30s
+      WORKER_HEARTBEAT_TTL: 45s
+      INSTANCE_ID: control-plane-compose
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
 
   scheduler:
     image: ghcr.io/gnix0/task-orchestrator-scheduler:dev
@@ -25,6 +51,15 @@ services:
       APP_ENV: compose
       LOG_LEVEL: debug
       SHUTDOWN_TIMEOUT_SECONDS: "10"
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
+      REDIS_ADDRESS: redis:6379
+      SCHEDULER_POLL_INTERVAL: 2s
+      LEASE_DURATION: 30s
+      WORKER_HEARTBEAT_TTL: 45s
+      INSTANCE_ID: scheduler-compose
+    depends_on:
+      - postgres
+      - redis
 
   worker-gateway:
     image: ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
@@ -38,5 +73,17 @@ services:
       LOG_LEVEL: debug
       GRPC_PORT: "8080"
       SHUTDOWN_TIMEOUT_SECONDS: "10"
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable
+      REDIS_ADDRESS: redis:6379
+      SCHEDULER_POLL_INTERVAL: 2s
+      LEASE_DURATION: 30s
+      WORKER_HEARTBEAT_TTL: 45s
+      INSTANCE_ID: worker-gateway-compose
     ports:
       - "8081:8080"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres-data:

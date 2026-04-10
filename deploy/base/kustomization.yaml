@@ -3,7 +3,12 @@ kind: Kustomization
 
 resources:
   - configmap.yaml
+  - secret.yaml
   - serviceaccount.yaml
+  - postgres-deployment.yaml
+  - postgres-service.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
   - control-plane-deployment.yaml
   - control-plane-service.yaml
   - scheduler-deployment.yaml

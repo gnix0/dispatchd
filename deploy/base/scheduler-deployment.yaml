@@ -33,6 +33,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: task-orchestrator-config
+            - secretRef:
+                name: task-orchestrator-secrets
+          env:
+            - name: INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           resources:
             requests:
               cpu: 25m
