@@ -264,11 +264,15 @@ func (s *Store) TryAcquireLeadership(ctx context.Context, instanceID string, ttl
 		ttl = 10 * time.Second
 	}
 
-	acquired, err := s.redis.SetNX(ctx, s.cfg.SchedulerLeaderKey, instanceID, ttl).Result()
+	status := s.redis.SetArgs(ctx, s.cfg.SchedulerLeaderKey, instanceID, redis.SetArgs{
+		TTL:  ttl,
+		Mode: "NX",
+	})
+	acquired, err := status.Result()
 	if err != nil {
 		return false, fmt.Errorf("acquire leader lock: %w", err)
 	}
-	if acquired {
+	if acquired == "OK" {
 		return true, nil
 	}
 

@@ -9,6 +9,7 @@ import (
 
 	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -20,27 +21,33 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	controlConn, err := grpc.DialContext(
-		ctx,
+	controlConn, err := grpc.NewClient(
 		"127.0.0.1:8080",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	)
 	if err != nil {
 		t.Fatalf("dial control-plane: %v", err)
 	}
-	defer controlConn.Close()
+	defer func() {
+		if err := controlConn.Close(); err != nil {
+			t.Fatalf("close control-plane connection: %v", err)
+		}
+	}()
+	waitForReady(t, ctx, controlConn, "control-plane")
 
-	workerConn, err := grpc.DialContext(
-		ctx,
+	workerConn, err := grpc.NewClient(
 		"127.0.0.1:8081",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	)
 	if err != nil {
 		t.Fatalf("dial worker-gateway: %v", err)
 	}
-	defer workerConn.Close()
+	defer func() {
+		if err := workerConn.Close(); err != nil {
+			t.Fatalf("close worker-gateway connection: %v", err)
+		}
+	}()
+	waitForReady(t, ctx, workerConn, "worker-gateway")
 
 	jobClient := taskorchestratorv1.NewJobServiceClient(controlConn)
 	workerClient := taskorchestratorv1.NewWorkerServiceClient(workerConn)
@@ -188,6 +195,21 @@ func waitForAssignment(messages <-chan *taskorchestratorv1.ConnectResponse, stre
 			}
 		case <-deadline:
 			return nil, nil
+		}
+	}
+}
+
+func waitForReady(t *testing.T, ctx context.Context, conn *grpc.ClientConn, service string) {
+	t.Helper()
+
+	conn.Connect()
+	for {
+		state := conn.GetState()
+		if state == connectivity.Ready {
+			return
+		}
+		if !conn.WaitForStateChange(ctx, state) {
+			t.Fatalf("%s connection did not become ready before deadline", service)
 		}
 	}
 }
