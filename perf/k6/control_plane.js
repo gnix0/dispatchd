@@ -2,7 +2,7 @@ import grpc from 'k6/net/grpc';
 import { check, sleep } from 'k6';
 
 const client = new grpc.Client();
-client.load(['/workspace/proto/taskorchestrator/v1'], 'task_orchestrator.proto');
+client.load(['/workspace/proto/dispatchd/v1'], 'dispatchd.proto');
 
 export const options = {
   vus: Number(__ENV.K6_VUS || 10),
@@ -15,7 +15,7 @@ export default function () {
   });
 
   const unique = `${__VU}-${__ITER}-${Date.now()}`;
-  const submitResponse = client.invoke('taskorchestrator.v1.JobService/SubmitJob', {
+  const submitResponse = client.invoke('dispatchd.v1.JobService/SubmitJob', {
     jobType: 'perf-smoke',
     payload: 'AQIDBA==',
     priority: 10,
@@ -29,7 +29,7 @@ export default function () {
 
   if (submitResponse && submitResponse.status === grpc.StatusOK) {
     const jobId = submitResponse.message.job.jobId;
-    const getResponse = client.invoke('taskorchestrator.v1.JobService/GetJob', {
+    const getResponse = client.invoke('dispatchd.v1.JobService/GetJob', {
       jobId,
     });
 

@@ -1,9 +1,9 @@
 SHELL := /bin/sh
 
-CONTROL_PLANE_IMAGE := ghcr.io/gnix0/task-orchestrator-control-plane:dev
-SCHEDULER_IMAGE := ghcr.io/gnix0/task-orchestrator-scheduler:dev
-WORKER_GATEWAY_IMAGE := ghcr.io/gnix0/task-orchestrator-worker-gateway:dev
-KIND_CLUSTER_NAME ?= task-orchestrator
+CONTROL_PLANE_IMAGE := ghcr.io/gnix0/dispatchd-control-plane:dev
+SCHEDULER_IMAGE := ghcr.io/gnix0/dispatchd-scheduler:dev
+WORKER_GATEWAY_IMAGE := ghcr.io/gnix0/dispatchd-worker-gateway:dev
+KIND_CLUSTER_NAME ?= dispatchd
 IMAGE_TAG ?= dev
 
 .PHONY: fmt fmt-check lint test build proto proto-check proto-breaking \

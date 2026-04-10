@@ -1,0 +1,30 @@
+name: Bug Report
+description: Report a reproducible defect in dispatchd.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include commands, configuration, or request flow needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: What checks, logs, traces, or screenshots support the report?
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include commit, release tag, environment, and any relevant overlay or workflow context.

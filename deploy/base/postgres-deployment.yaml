@@ -32,7 +32,7 @@ spec:
             readOnlyRootFilesystem: true
           env:
             - name: POSTGRES_DB
-              value: task_orchestrator
+              value: dispatchd
             - name: POSTGRES_USER
               value: postgres
             - name: POSTGRES_PASSWORD

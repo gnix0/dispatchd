@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/config"
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -13,8 +13,8 @@ import (
 func TestAuthenticateValidBearerToken(t *testing.T) {
 	authenticator, err := NewAuthenticator(config.Service{
 		AuthEnabled:         true,
-		AuthJWTIssuer:       "task-orchestrator",
-		AuthJWTAudience:     "task-orchestrator-clients",
+		AuthJWTIssuer:       "dispatchd",
+		AuthJWTAudience:     "dispatchd-clients",
 		AuthJWTSharedSecret: "super-secret",
 	})
 	if err != nil {
@@ -23,8 +23,8 @@ func TestAuthenticateValidBearerToken(t *testing.T) {
 
 	tokenString := signToken(t, jwt.MapClaims{
 		"sub":   "user-1",
-		"iss":   "task-orchestrator",
-		"aud":   []string{"task-orchestrator-clients"},
+		"iss":   "dispatchd",
+		"aud":   []string{"dispatchd-clients"},
 		"roles": []string{"submitter", "viewer"},
 	}, "super-secret")
 
@@ -47,8 +47,8 @@ func TestAuthenticateValidBearerToken(t *testing.T) {
 func TestAuthenticateRejectsMissingToken(t *testing.T) {
 	authenticator, err := NewAuthenticator(config.Service{
 		AuthEnabled:         true,
-		AuthJWTIssuer:       "task-orchestrator",
-		AuthJWTAudience:     "task-orchestrator-clients",
+		AuthJWTIssuer:       "dispatchd",
+		AuthJWTAudience:     "dispatchd-clients",
 		AuthJWTSharedSecret: "super-secret",
 	})
 	if err != nil {
@@ -85,10 +85,10 @@ func TestIsAuthorizedUsesMethodPolicies(t *testing.T) {
 		},
 	}
 
-	if !isAuthorized("/taskorchestrator.v1.JobService/SubmitJob", principal) {
+	if !isAuthorized("/dispatchd.v1.JobService/SubmitJob", principal) {
 		t.Fatal("expected submitter to be allowed to submit")
 	}
-	if isAuthorized("/taskorchestrator.v1.JobService/CancelJob", principal) {
+	if isAuthorized("/dispatchd.v1.JobService/CancelJob", principal) {
 		t.Fatal("expected submitter/viewer to be denied cancel")
 	}
 }

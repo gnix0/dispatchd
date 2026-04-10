@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/gnix0/task-orchestrator/internal/application/jobs"
-	"github.com/gnix0/task-orchestrator/internal/platform/observability"
+	"github.com/gnix0/dispatchd/internal/application/jobs"
+	"github.com/gnix0/dispatchd/internal/platform/observability"
 	"go.opentelemetry.io/otel/attribute"
 )
 

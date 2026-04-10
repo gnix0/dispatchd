@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
+	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
-	if os.Getenv("TASK_ORCHESTRATOR_INTEGRATION") != "1" {
-		t.Skip("set TASK_ORCHESTRATOR_INTEGRATION=1 to run integration smoke tests")
+	if os.Getenv("DISPATCHD_INTEGRATION") != "1" {
+		t.Skip("set DISPATCHD_INTEGRATION=1 to run integration smoke tests")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -49,10 +49,10 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 	}()
 	waitForReady(t, ctx, workerConn, "worker-gateway")
 
-	jobClient := taskorchestratorv1.NewJobServiceClient(controlConn)
-	workerClient := taskorchestratorv1.NewWorkerServiceClient(workerConn)
+	jobClient := dispatchdv1.NewJobServiceClient(controlConn)
+	workerClient := dispatchdv1.NewWorkerServiceClient(workerConn)
 
-	submitResp, err := jobClient.SubmitJob(ctx, &taskorchestratorv1.SubmitJobRequest{
+	submitResp, err := jobClient.SubmitJob(ctx, &dispatchdv1.SubmitJobRequest{
 		JobType:        "email.send",
 		Payload:        []byte(`{"user_id":"integration-smoke"}`),
 		IdempotencyKey: "integration-smoke-" + time.Now().UTC().Format("20060102150405.000000000"),
@@ -67,7 +67,7 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 		t.Fatalf("open worker stream: %v", err)
 	}
 
-	messages := make(chan *taskorchestratorv1.ConnectResponse, 16)
+	messages := make(chan *dispatchdv1.ConnectResponse, 16)
 	streamErr := make(chan error, 1)
 	go func() {
 		for {
@@ -81,9 +81,9 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 		}
 	}()
 
-	if err := stream.Send(&taskorchestratorv1.ConnectRequest{
-		Payload: &taskorchestratorv1.ConnectRequest_Registration{
-			Registration: &taskorchestratorv1.WorkerRegistration{
+	if err := stream.Send(&dispatchdv1.ConnectRequest{
+		Payload: &dispatchdv1.ConnectRequest_Registration{
+			Registration: &dispatchdv1.WorkerRegistration{
 				WorkerId:       "integration-worker-1",
 				Capabilities:   []string{"email"},
 				MaxConcurrency: 1,
@@ -97,13 +97,13 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 		t.Fatalf("registration ack: %v", err)
 	}
 
-	var assignment *taskorchestratorv1.TaskAssignment
+	var assignment *dispatchdv1.TaskAssignment
 	for i := 0; i < 8 && assignment == nil; i++ {
-		if err := stream.Send(&taskorchestratorv1.ConnectRequest{
-			Payload: &taskorchestratorv1.ConnectRequest_Heartbeat{
-				Heartbeat: &taskorchestratorv1.WorkerHeartbeat{
+		if err := stream.Send(&dispatchdv1.ConnectRequest{
+			Payload: &dispatchdv1.ConnectRequest_Heartbeat{
+				Heartbeat: &dispatchdv1.WorkerHeartbeat{
 					WorkerId:           "integration-worker-1",
-					Status:             taskorchestratorv1.WorkerStatus_WORKER_STATUS_READY,
+					Status:             dispatchdv1.WorkerStatus_WORKER_STATUS_READY,
 					InflightExecutions: 0,
 				},
 			},
@@ -122,9 +122,9 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 		t.Fatal("expected assignment to be delivered to connected worker")
 	}
 
-	if err := stream.Send(&taskorchestratorv1.ConnectRequest{
-		Payload: &taskorchestratorv1.ConnectRequest_Result{
-			Result: &taskorchestratorv1.TaskResult{
+	if err := stream.Send(&dispatchdv1.ConnectRequest{
+		Payload: &dispatchdv1.ConnectRequest_Result{
+			Result: &dispatchdv1.TaskResult{
 				ExecutionId: assignment.GetExecutionId(),
 				Success:     true,
 				Metadata: map[string]string{
@@ -142,11 +142,11 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		getResp, err := jobClient.GetJob(ctx, &taskorchestratorv1.GetJobRequest{JobId: submitResp.GetJob().GetJobId()})
+		getResp, err := jobClient.GetJob(ctx, &dispatchdv1.GetJobRequest{JobId: submitResp.GetJob().GetJobId()})
 		if err != nil {
 			t.Fatalf("get job: %v", err)
 		}
-		if getResp.GetJob().GetStatus() == taskorchestratorv1.JobStatus_JOB_STATUS_SUCCEEDED {
+		if getResp.GetJob().GetStatus() == dispatchdv1.JobStatus_JOB_STATUS_SUCCEEDED {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -155,7 +155,7 @@ func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
 	t.Fatalf("job %s did not reach succeeded state before deadline", submitResp.GetJob().GetJobId())
 }
 
-func waitForAck(messages <-chan *taskorchestratorv1.ConnectResponse, streamErr <-chan error, timeout time.Duration) (*taskorchestratorv1.WorkerAck, error) {
+func waitForAck(messages <-chan *dispatchdv1.ConnectResponse, streamErr <-chan error, timeout time.Duration) (*dispatchdv1.WorkerAck, error) {
 	deadline := time.After(timeout)
 	for {
 		select {
@@ -177,7 +177,7 @@ func waitForAck(messages <-chan *taskorchestratorv1.ConnectResponse, streamErr <
 	}
 }
 
-func waitForAssignment(messages <-chan *taskorchestratorv1.ConnectResponse, streamErr <-chan error, timeout time.Duration) (*taskorchestratorv1.TaskAssignment, error) {
+func waitForAssignment(messages <-chan *dispatchdv1.ConnectResponse, streamErr <-chan error, timeout time.Duration) (*dispatchdv1.TaskAssignment, error) {
 	deadline := time.After(timeout)
 	for {
 		select {

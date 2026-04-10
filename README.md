@@ -1,6 +1,28 @@
-# task-orchestrator
+# dispatchd
 
 Distributed task orchestration platform in Go built around gRPC contracts, shared Postgres and Redis state, Kustomize-based GitOps delivery, and an Argo CD deployment path.
+
+## Versioning
+
+`dispatchd` uses Semantic Versioning for repository releases.
+
+- `0.x.y` covers the current hardening phase, where the public API and operational model can still evolve.
+- patch releases are for backward-compatible fixes
+- minor releases are for backward-compatible capabilities and hardening milestones
+- `1.0.0` is reserved for the point where the documented public API and operating model are stable enough for real production adoption
+
+Released tags are immutable. Once a version is published, any correction ships as a new version instead of mutating the existing tag.
+
+## Public API Surface
+
+The release contract for `dispatchd` currently includes:
+
+- the protobuf and gRPC contract under `proto/dispatchd/v1`
+- the generated Go client/server stubs under `gen/go/dispatchd`
+- the documented operator-facing environment and deployment shape used by Docker Compose, Kustomize, Argo CD, and GitHub Actions
+- the published image naming scheme under `ghcr.io/gnix0/dispatchd-*`
+
+Until `1.0.0`, these surfaces may still change, but any change that affects compatibility should be called out in release notes and pull requests.
 
 ## Architecture
 
@@ -89,30 +111,37 @@ Security-relevant role mapping is:
 
 ### Containers
 
-- a single multi-stage [Dockerfile](/home/gnix0/developer/task-orchestrator/Dockerfile) builds any service binary through the `SERVICE` build argument
-- [docker-compose.yml](/home/gnix0/developer/task-orchestrator/docker-compose.yml) packages the three services together with Postgres and Redis for local distributed execution
+- a single multi-stage [Dockerfile](/home/gnix0/developer/dispatchd/Dockerfile) builds any service binary through the `SERVICE` build argument
+- [docker-compose.yml](/home/gnix0/developer/dispatchd/docker-compose.yml) packages the three services together with Postgres and Redis for local distributed execution
 
 ### Kubernetes
 
-- [deploy/base](/home/gnix0/developer/task-orchestrator/deploy/base) contains reusable Deployments, Services, ConfigMap, Secrets, ServiceAccount, and NetworkPolicy resources
-- [deploy/overlays/dev](/home/gnix0/developer/task-orchestrator/deploy/overlays/dev) defines the development overlay used by local `kind` clusters and GitOps updates
-- [deploy/overlays/staging](/home/gnix0/developer/task-orchestrator/deploy/overlays/staging) defines a promotion-oriented staging overlay
-- [deploy/overlays/prod](/home/gnix0/developer/task-orchestrator/deploy/overlays/prod) defines a production-oriented overlay and PodDisruptionBudgets
-- [deploy/kind/cluster.yaml](/home/gnix0/developer/task-orchestrator/deploy/kind/cluster.yaml) maps NodePorts for local access to the control-plane and worker-gateway
+- [deploy/base](/home/gnix0/developer/dispatchd/deploy/base) contains reusable Deployments, Services, ConfigMap, Secrets, ServiceAccount, and NetworkPolicy resources
+- [deploy/overlays/dev](/home/gnix0/developer/dispatchd/deploy/overlays/dev) defines the development overlay used by local `kind` clusters and GitOps updates
+- [deploy/overlays/staging](/home/gnix0/developer/dispatchd/deploy/overlays/staging) defines a promotion-oriented staging overlay
+- [deploy/overlays/prod](/home/gnix0/developer/dispatchd/deploy/overlays/prod) defines a production-oriented overlay and PodDisruptionBudgets
+- [deploy/kind/cluster.yaml](/home/gnix0/developer/dispatchd/deploy/kind/cluster.yaml) maps NodePorts for local access to the control-plane and worker-gateway
 
 ### GitOps
 
 - image tags are managed through the Kustomize `images` section in the dev overlay
-- [scripts/update-dev-image-tags.sh](/home/gnix0/developer/task-orchestrator/scripts/update-dev-image-tags.sh) updates the dev overlay tags for automated GitOps PRs
-- the release workflow publishes images and opens a PR with updated deployment tags instead of mutating manifests directly on the default branch
+- [scripts/update-dev-image-tags.sh](/home/gnix0/developer/dispatchd/scripts/update-dev-image-tags.sh) updates the dev overlay tags for automated GitOps PRs
+- the release workflow publishes images from semantic version tags and opens a PR with updated deployment tags instead of mutating manifests directly on the default branch
 
 ### Argo CD
 
-- [deploy/argocd/dev-application.yaml](/home/gnix0/developer/task-orchestrator/deploy/argocd/dev-application.yaml) defines the dev `Application`
-- [deploy/argocd/project.yaml](/home/gnix0/developer/task-orchestrator/deploy/argocd/project.yaml) defines the Argo CD project boundaries
+- [deploy/argocd/dev-application.yaml](/home/gnix0/developer/dispatchd/deploy/argocd/dev-application.yaml) defines the dev `Application`
+- [deploy/argocd/project.yaml](/home/gnix0/developer/dispatchd/deploy/argocd/project.yaml) defines the Argo CD project boundaries
 - Argo CD targets the `deploy/overlays/dev` path and can self-heal and prune once the repo is connected
 
 If you fork or rename the repository, update the Argo CD `repoURL` fields to match the canonical Git URL for your deployment source.
+
+## Governance
+
+- contribution expectations are documented in [CONTRIBUTING.md](/home/gnix0/developer/dispatchd/CONTRIBUTING.md)
+- security intake is documented in [.github/SECURITY.md](/home/gnix0/developer/dispatchd/.github/SECURITY.md)
+- release history is tracked in [CHANGELOG.md](/home/gnix0/developer/dispatchd/CHANGELOG.md)
+- repository ownership defaults are declared in [.github/CODEOWNERS](/home/gnix0/developer/dispatchd/.github/CODEOWNERS)
 
 ## High Availability And DR
 
@@ -121,8 +150,8 @@ The repository now carries the first HA/DR-oriented operational assets:
 - scheduler leadership is coordinated through Redis so only one active scheduler instance reconciles work per environment
 - staging and production Kustomize overlays separate promotion targets from development
 - production PodDisruptionBudgets keep the core services available during voluntary disruptions
-- Postgres backup and restore helpers live in [backup-postgres.sh](/home/gnix0/developer/task-orchestrator/scripts/backup-postgres.sh) and [restore-postgres.sh](/home/gnix0/developer/task-orchestrator/scripts/restore-postgres.sh)
-- a scheduler restart drill lives in [failover-smoke.sh](/home/gnix0/developer/task-orchestrator/scripts/failover-smoke.sh)
+- Postgres backup and restore helpers live in [backup-postgres.sh](/home/gnix0/developer/dispatchd/scripts/backup-postgres.sh) and [restore-postgres.sh](/home/gnix0/developer/dispatchd/scripts/restore-postgres.sh)
+- a scheduler restart drill lives in [failover-smoke.sh](/home/gnix0/developer/dispatchd/scripts/failover-smoke.sh)
 
 This repository models single-region active leadership today. The config boundaries and overlays are structured so failover and environment promotion can be exercised explicitly rather than hidden in manual operator steps.
 
@@ -136,7 +165,7 @@ The repository includes a Dockerized performance and observability workflow buil
 - `k6` gRPC load generation for the control-plane unary path
 - a dedicated `perf-worker` load client for worker registration and heartbeat pressure
 
-Reference evidence for the current branch lives under [assets/perf](/home/gnix0/developer/task-orchestrator/assets/perf) and [perf/results](/home/gnix0/developer/task-orchestrator/perf/results).
+Reference evidence for the current branch lives under [assets/perf](/home/gnix0/developer/dispatchd/assets/perf) and [perf/results](/home/gnix0/developer/dispatchd/perf/results).
 
 Supported SLOs for the current evidence set:
 
@@ -154,8 +183,8 @@ Measured SLIs from the captured runs:
 
 Evidence currently checked into the repository includes:
 
-- Grafana request-rate and latency captures such as [grafana_grpc_req_rate.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_grpc_req_rate.png) and [grafana_grpc_p95_latency.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_grpc_p95_latency.png)
-- worker and scheduler activity captures such as [grafana_worker_stream_events.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_worker_stream_events.png), [grafana_dispatch_events.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_dispatch_events.png), and [grafana_scheduler_ticks_avg_duration.png](/home/gnix0/developer/task-orchestrator/assets/perf/grafana_scheduler_ticks_avg_duration.png)
+- Grafana request-rate and latency captures such as [grafana_grpc_req_rate.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_grpc_req_rate.png) and [grafana_grpc_p95_latency.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_grpc_p95_latency.png)
+- worker and scheduler activity captures such as [grafana_worker_stream_events.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_worker_stream_events.png), [grafana_dispatch_events.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_dispatch_events.png), and [grafana_scheduler_ticks_avg_duration.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_scheduler_ticks_avg_duration.png)
 
 The currently published SLI set is intentionally limited to the portions of the system that were directly measured in the checked-in evidence. It does not claim submit-to-assignment latency, end-to-end execution latency, or retry/dead-letter timing because those were not benchmarked explicitly in this evidence set.
 
@@ -201,7 +230,7 @@ make proto-check
 Distributed smoke:
 
 ```bash
-TASK_ORCHESTRATOR_INTEGRATION=1 go test ./integration -run TestDistributedSubmitAssignCompleteFlow -count=1 -v
+DISPATCHD_INTEGRATION=1 go test ./integration -run TestDistributedSubmitAssignCompleteFlow -count=1 -v
 ```
 
 Protobuf workflows:

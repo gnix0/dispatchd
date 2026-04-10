@@ -7,9 +7,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/gnix0/task-orchestrator/internal/platform/config"
-	"github.com/gnix0/task-orchestrator/internal/platform/observability"
-	"github.com/gnix0/task-orchestrator/internal/platform/security"
+	"github.com/gnix0/dispatchd/internal/platform/config"
+	"github.com/gnix0/dispatchd/internal/platform/observability"
+	"github.com/gnix0/dispatchd/internal/platform/security"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"

@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: taskorchestrator/v1/task_orchestrator.proto
+// source: dispatchd/v1/dispatchd.proto
 
-package taskorchestratorv1
+package dispatchdv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -68,11 +68,11 @@ func (x JobStatus) String() string {
 }
 
 func (JobStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_taskorchestrator_v1_task_orchestrator_proto_enumTypes[0].Descriptor()
+	return file_dispatchd_v1_dispatchd_proto_enumTypes[0].Descriptor()
 }
 
 func (JobStatus) Type() protoreflect.EnumType {
-	return &file_taskorchestrator_v1_task_orchestrator_proto_enumTypes[0]
+	return &file_dispatchd_v1_dispatchd_proto_enumTypes[0]
 }
 
 func (x JobStatus) Number() protoreflect.EnumNumber {
@@ -81,7 +81,7 @@ func (x JobStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use JobStatus.Descriptor instead.
 func (JobStatus) EnumDescriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{0}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{0}
 }
 
 type ExecutionStatus int32
@@ -129,11 +129,11 @@ func (x ExecutionStatus) String() string {
 }
 
 func (ExecutionStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_taskorchestrator_v1_task_orchestrator_proto_enumTypes[1].Descriptor()
+	return file_dispatchd_v1_dispatchd_proto_enumTypes[1].Descriptor()
 }
 
 func (ExecutionStatus) Type() protoreflect.EnumType {
-	return &file_taskorchestrator_v1_task_orchestrator_proto_enumTypes[1]
+	return &file_dispatchd_v1_dispatchd_proto_enumTypes[1]
 }
 
 func (x ExecutionStatus) Number() protoreflect.EnumNumber {
@@ -142,7 +142,7 @@ func (x ExecutionStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ExecutionStatus.Descriptor instead.
 func (ExecutionStatus) EnumDescriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{1}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{1}
 }
 
 type WorkerStatus int32
@@ -184,11 +184,11 @@ func (x WorkerStatus) String() string {
 }
 
 func (WorkerStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_taskorchestrator_v1_task_orchestrator_proto_enumTypes[2].Descriptor()
+	return file_dispatchd_v1_dispatchd_proto_enumTypes[2].Descriptor()
 }
 
 func (WorkerStatus) Type() protoreflect.EnumType {
-	return &file_taskorchestrator_v1_task_orchestrator_proto_enumTypes[2]
+	return &file_dispatchd_v1_dispatchd_proto_enumTypes[2]
 }
 
 func (x WorkerStatus) Number() protoreflect.EnumNumber {
@@ -197,7 +197,7 @@ func (x WorkerStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WorkerStatus.Descriptor instead.
 func (WorkerStatus) EnumDescriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{2}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{2}
 }
 
 type SubmitJobRequest struct {
@@ -214,7 +214,7 @@ type SubmitJobRequest struct {
 
 func (x *SubmitJobRequest) Reset() {
 	*x = SubmitJobRequest{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[0]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +226,7 @@ func (x *SubmitJobRequest) String() string {
 func (*SubmitJobRequest) ProtoMessage() {}
 
 func (x *SubmitJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[0]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +239,7 @@ func (x *SubmitJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitJobRequest.ProtoReflect.Descriptor instead.
 func (*SubmitJobRequest) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{0}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SubmitJobRequest) GetJobType() string {
@@ -293,7 +293,7 @@ type SubmitJobResponse struct {
 
 func (x *SubmitJobResponse) Reset() {
 	*x = SubmitJobResponse{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[1]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -305,7 +305,7 @@ func (x *SubmitJobResponse) String() string {
 func (*SubmitJobResponse) ProtoMessage() {}
 
 func (x *SubmitJobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[1]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -318,7 +318,7 @@ func (x *SubmitJobResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitJobResponse.ProtoReflect.Descriptor instead.
 func (*SubmitJobResponse) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{1}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SubmitJobResponse) GetJob() *Job {
@@ -337,7 +337,7 @@ type CancelJobRequest struct {
 
 func (x *CancelJobRequest) Reset() {
 	*x = CancelJobRequest{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[2]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -349,7 +349,7 @@ func (x *CancelJobRequest) String() string {
 func (*CancelJobRequest) ProtoMessage() {}
 
 func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[2]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -362,7 +362,7 @@ func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelJobRequest.ProtoReflect.Descriptor instead.
 func (*CancelJobRequest) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{2}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CancelJobRequest) GetJobId() string {
@@ -381,7 +381,7 @@ type CancelJobResponse struct {
 
 func (x *CancelJobResponse) Reset() {
 	*x = CancelJobResponse{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[3]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -393,7 +393,7 @@ func (x *CancelJobResponse) String() string {
 func (*CancelJobResponse) ProtoMessage() {}
 
 func (x *CancelJobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[3]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -406,7 +406,7 @@ func (x *CancelJobResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelJobResponse.ProtoReflect.Descriptor instead.
 func (*CancelJobResponse) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{3}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CancelJobResponse) GetJob() *Job {
@@ -425,7 +425,7 @@ type GetJobRequest struct {
 
 func (x *GetJobRequest) Reset() {
 	*x = GetJobRequest{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[4]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -437,7 +437,7 @@ func (x *GetJobRequest) String() string {
 func (*GetJobRequest) ProtoMessage() {}
 
 func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[4]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -450,7 +450,7 @@ func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetJobRequest.ProtoReflect.Descriptor instead.
 func (*GetJobRequest) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{4}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetJobRequest) GetJobId() string {
@@ -469,7 +469,7 @@ type GetJobResponse struct {
 
 func (x *GetJobResponse) Reset() {
 	*x = GetJobResponse{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[5]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -481,7 +481,7 @@ func (x *GetJobResponse) String() string {
 func (*GetJobResponse) ProtoMessage() {}
 
 func (x *GetJobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[5]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -494,7 +494,7 @@ func (x *GetJobResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetJobResponse.ProtoReflect.Descriptor instead.
 func (*GetJobResponse) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{5}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetJobResponse) GetJob() *Job {
@@ -515,7 +515,7 @@ type ListExecutionsRequest struct {
 
 func (x *ListExecutionsRequest) Reset() {
 	*x = ListExecutionsRequest{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[6]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -527,7 +527,7 @@ func (x *ListExecutionsRequest) String() string {
 func (*ListExecutionsRequest) ProtoMessage() {}
 
 func (x *ListExecutionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[6]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -540,7 +540,7 @@ func (x *ListExecutionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExecutionsRequest.ProtoReflect.Descriptor instead.
 func (*ListExecutionsRequest) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{6}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListExecutionsRequest) GetJobId() string {
@@ -574,7 +574,7 @@ type ListExecutionsResponse struct {
 
 func (x *ListExecutionsResponse) Reset() {
 	*x = ListExecutionsResponse{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[7]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -586,7 +586,7 @@ func (x *ListExecutionsResponse) String() string {
 func (*ListExecutionsResponse) ProtoMessage() {}
 
 func (x *ListExecutionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[7]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -599,7 +599,7 @@ func (x *ListExecutionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExecutionsResponse.ProtoReflect.Descriptor instead.
 func (*ListExecutionsResponse) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{7}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListExecutionsResponse) GetExecutions() []*Execution {
@@ -631,7 +631,7 @@ type ConnectRequest struct {
 
 func (x *ConnectRequest) Reset() {
 	*x = ConnectRequest{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[8]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +643,7 @@ func (x *ConnectRequest) String() string {
 func (*ConnectRequest) ProtoMessage() {}
 
 func (x *ConnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[8]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +656,7 @@ func (x *ConnectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectRequest.ProtoReflect.Descriptor instead.
 func (*ConnectRequest) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{8}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ConnectRequest) GetPayload() isConnectRequest_Payload {
@@ -744,7 +744,7 @@ type ConnectResponse struct {
 
 func (x *ConnectResponse) Reset() {
 	*x = ConnectResponse{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[9]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -756,7 +756,7 @@ func (x *ConnectResponse) String() string {
 func (*ConnectResponse) ProtoMessage() {}
 
 func (x *ConnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[9]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -769,7 +769,7 @@ func (x *ConnectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectResponse.ProtoReflect.Descriptor instead.
 func (*ConnectResponse) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{9}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ConnectResponse) GetPayload() isConnectResponse_Payload {
@@ -833,7 +833,7 @@ type Job struct {
 	JobId          string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	JobType        string                 `protobuf:"bytes,2,opt,name=job_type,json=jobType,proto3" json:"job_type,omitempty"`
 	Payload        []byte                 `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
-	Status         JobStatus              `protobuf:"varint,4,opt,name=status,proto3,enum=taskorchestrator.v1.JobStatus" json:"status,omitempty"`
+	Status         JobStatus              `protobuf:"varint,4,opt,name=status,proto3,enum=dispatchd.v1.JobStatus" json:"status,omitempty"`
 	Priority       int32                  `protobuf:"varint,5,opt,name=priority,proto3" json:"priority,omitempty"`
 	IdempotencyKey string                 `protobuf:"bytes,6,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
 	Metadata       map[string]string      `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -846,7 +846,7 @@ type Job struct {
 
 func (x *Job) Reset() {
 	*x = Job{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[10]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -858,7 +858,7 @@ func (x *Job) String() string {
 func (*Job) ProtoMessage() {}
 
 func (x *Job) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[10]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -871,7 +871,7 @@ func (x *Job) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Job.ProtoReflect.Descriptor instead.
 func (*Job) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{10}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Job) GetJobId() string {
@@ -949,7 +949,7 @@ type Execution struct {
 	ExecutionId   string                 `protobuf:"bytes,1,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty"`
 	JobId         string                 `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	Attempt       int32                  `protobuf:"varint,3,opt,name=attempt,proto3" json:"attempt,omitempty"`
-	Status        ExecutionStatus        `protobuf:"varint,4,opt,name=status,proto3,enum=taskorchestrator.v1.ExecutionStatus" json:"status,omitempty"`
+	Status        ExecutionStatus        `protobuf:"varint,4,opt,name=status,proto3,enum=dispatchd.v1.ExecutionStatus" json:"status,omitempty"`
 	WorkerId      string                 `protobuf:"bytes,5,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
 	ErrorMessage  string                 `protobuf:"bytes,6,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 	ClaimedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=claimed_at,json=claimedAt,proto3" json:"claimed_at,omitempty"`
@@ -961,7 +961,7 @@ type Execution struct {
 
 func (x *Execution) Reset() {
 	*x = Execution{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[11]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -973,7 +973,7 @@ func (x *Execution) String() string {
 func (*Execution) ProtoMessage() {}
 
 func (x *Execution) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[11]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -986,7 +986,7 @@ func (x *Execution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Execution.ProtoReflect.Descriptor instead.
 func (*Execution) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{11}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Execution) GetExecutionId() string {
@@ -1063,7 +1063,7 @@ type RetryPolicy struct {
 
 func (x *RetryPolicy) Reset() {
 	*x = RetryPolicy{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[12]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1075,7 +1075,7 @@ func (x *RetryPolicy) String() string {
 func (*RetryPolicy) ProtoMessage() {}
 
 func (x *RetryPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[12]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1088,7 +1088,7 @@ func (x *RetryPolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetryPolicy.ProtoReflect.Descriptor instead.
 func (*RetryPolicy) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{12}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RetryPolicy) GetMaxAttempts() int32 {
@@ -1124,7 +1124,7 @@ type WorkerRegistration struct {
 
 func (x *WorkerRegistration) Reset() {
 	*x = WorkerRegistration{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[13]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1136,7 +1136,7 @@ func (x *WorkerRegistration) String() string {
 func (*WorkerRegistration) ProtoMessage() {}
 
 func (x *WorkerRegistration) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[13]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1149,7 +1149,7 @@ func (x *WorkerRegistration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerRegistration.ProtoReflect.Descriptor instead.
 func (*WorkerRegistration) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{13}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *WorkerRegistration) GetWorkerId() string {
@@ -1183,7 +1183,7 @@ func (x *WorkerRegistration) GetLabels() map[string]string {
 type WorkerHeartbeat struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	WorkerId           string                 `protobuf:"bytes,1,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
-	Status             WorkerStatus           `protobuf:"varint,2,opt,name=status,proto3,enum=taskorchestrator.v1.WorkerStatus" json:"status,omitempty"`
+	Status             WorkerStatus           `protobuf:"varint,2,opt,name=status,proto3,enum=dispatchd.v1.WorkerStatus" json:"status,omitempty"`
 	InflightExecutions int32                  `protobuf:"varint,3,opt,name=inflight_executions,json=inflightExecutions,proto3" json:"inflight_executions,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
@@ -1191,7 +1191,7 @@ type WorkerHeartbeat struct {
 
 func (x *WorkerHeartbeat) Reset() {
 	*x = WorkerHeartbeat{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[14]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1203,7 +1203,7 @@ func (x *WorkerHeartbeat) String() string {
 func (*WorkerHeartbeat) ProtoMessage() {}
 
 func (x *WorkerHeartbeat) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[14]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1216,7 +1216,7 @@ func (x *WorkerHeartbeat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerHeartbeat.ProtoReflect.Descriptor instead.
 func (*WorkerHeartbeat) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{14}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *WorkerHeartbeat) GetWorkerId() string {
@@ -1253,7 +1253,7 @@ type TaskAssignment struct {
 
 func (x *TaskAssignment) Reset() {
 	*x = TaskAssignment{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[15]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1265,7 +1265,7 @@ func (x *TaskAssignment) String() string {
 func (*TaskAssignment) ProtoMessage() {}
 
 func (x *TaskAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[15]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1278,7 +1278,7 @@ func (x *TaskAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskAssignment.ProtoReflect.Descriptor instead.
 func (*TaskAssignment) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{15}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *TaskAssignment) GetExecutionId() string {
@@ -1328,7 +1328,7 @@ type TaskResult struct {
 
 func (x *TaskResult) Reset() {
 	*x = TaskResult{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[16]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1340,7 +1340,7 @@ func (x *TaskResult) String() string {
 func (*TaskResult) ProtoMessage() {}
 
 func (x *TaskResult) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[16]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1353,7 +1353,7 @@ func (x *TaskResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskResult.ProtoReflect.Descriptor instead.
 func (*TaskResult) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{16}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TaskResult) GetExecutionId() string {
@@ -1395,7 +1395,7 @@ type TaskLogChunk struct {
 
 func (x *TaskLogChunk) Reset() {
 	*x = TaskLogChunk{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[17]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1407,7 +1407,7 @@ func (x *TaskLogChunk) String() string {
 func (*TaskLogChunk) ProtoMessage() {}
 
 func (x *TaskLogChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[17]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1420,7 +1420,7 @@ func (x *TaskLogChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskLogChunk.ProtoReflect.Descriptor instead.
 func (*TaskLogChunk) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{17}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *TaskLogChunk) GetExecutionId() string {
@@ -1455,7 +1455,7 @@ type WorkerAck struct {
 
 func (x *WorkerAck) Reset() {
 	*x = WorkerAck{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[18]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1467,7 +1467,7 @@ func (x *WorkerAck) String() string {
 func (*WorkerAck) ProtoMessage() {}
 
 func (x *WorkerAck) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[18]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1480,7 +1480,7 @@ func (x *WorkerAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerAck.ProtoReflect.Descriptor instead.
 func (*WorkerAck) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{18}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *WorkerAck) GetExecutionId() string {
@@ -1513,7 +1513,7 @@ type DrainSignal struct {
 
 func (x *DrainSignal) Reset() {
 	*x = DrainSignal{}
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[19]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1525,7 +1525,7 @@ func (x *DrainSignal) String() string {
 func (*DrainSignal) ProtoMessage() {}
 
 func (x *DrainSignal) ProtoReflect() protoreflect.Message {
-	mi := &file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[19]
+	mi := &file_dispatchd_v1_dispatchd_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1538,7 +1538,7 @@ func (x *DrainSignal) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrainSignal.ProtoReflect.Descriptor instead.
 func (*DrainSignal) Descriptor() ([]byte, []int) {
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP(), []int{19}
+	return file_dispatchd_v1_dispatchd_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DrainSignal) GetReason() string {
@@ -1548,63 +1548,63 @@ func (x *DrainSignal) GetReason() string {
 	return ""
 }
 
-var File_taskorchestrator_v1_task_orchestrator_proto protoreflect.FileDescriptor
+var File_dispatchd_v1_dispatchd_proto protoreflect.FileDescriptor
 
-const file_taskorchestrator_v1_task_orchestrator_proto_rawDesc = "" +
+const file_dispatchd_v1_dispatchd_proto_rawDesc = "" +
 	"\n" +
-	"+taskorchestrator/v1/task_orchestrator.proto\x12\x13taskorchestrator.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdf\x02\n" +
+	"\x1cdispatchd/v1/dispatchd.proto\x12\fdispatchd.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd1\x02\n" +
 	"\x10SubmitJobRequest\x12\x19\n" +
 	"\bjob_type\x18\x01 \x01(\tR\ajobType\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\x12\x1a\n" +
 	"\bpriority\x18\x03 \x01(\x05R\bpriority\x12'\n" +
-	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\x12O\n" +
-	"\bmetadata\x18\x05 \x03(\v23.taskorchestrator.v1.SubmitJobRequest.MetadataEntryR\bmetadata\x12C\n" +
-	"\fretry_policy\x18\x06 \x01(\v2 .taskorchestrator.v1.RetryPolicyR\vretryPolicy\x1a;\n" +
+	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\x12H\n" +
+	"\bmetadata\x18\x05 \x03(\v2,.dispatchd.v1.SubmitJobRequest.MetadataEntryR\bmetadata\x12<\n" +
+	"\fretry_policy\x18\x06 \x01(\v2\x19.dispatchd.v1.RetryPolicyR\vretryPolicy\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"?\n" +
-	"\x11SubmitJobResponse\x12*\n" +
-	"\x03job\x18\x01 \x01(\v2\x18.taskorchestrator.v1.JobR\x03job\")\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"8\n" +
+	"\x11SubmitJobResponse\x12#\n" +
+	"\x03job\x18\x01 \x01(\v2\x11.dispatchd.v1.JobR\x03job\")\n" +
 	"\x10CancelJobRequest\x12\x15\n" +
-	"\x06job_id\x18\x01 \x01(\tR\x05jobId\"?\n" +
-	"\x11CancelJobResponse\x12*\n" +
-	"\x03job\x18\x01 \x01(\v2\x18.taskorchestrator.v1.JobR\x03job\"&\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\"8\n" +
+	"\x11CancelJobResponse\x12#\n" +
+	"\x03job\x18\x01 \x01(\v2\x11.dispatchd.v1.JobR\x03job\"&\n" +
 	"\rGetJobRequest\x12\x15\n" +
-	"\x06job_id\x18\x01 \x01(\tR\x05jobId\"<\n" +
-	"\x0eGetJobResponse\x12*\n" +
-	"\x03job\x18\x01 \x01(\v2\x18.taskorchestrator.v1.JobR\x03job\"j\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\"5\n" +
+	"\x0eGetJobResponse\x12#\n" +
+	"\x03job\x18\x01 \x01(\v2\x11.dispatchd.v1.JobR\x03job\"j\n" +
 	"\x15ListExecutionsRequest\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\"\x80\x01\n" +
-	"\x16ListExecutionsResponse\x12>\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"y\n" +
+	"\x16ListExecutionsResponse\x127\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1e.taskorchestrator.v1.ExecutionR\n" +
+	"executions\x18\x01 \x03(\v2\x17.dispatchd.v1.ExecutionR\n" +
 	"executions\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xad\x02\n" +
-	"\x0eConnectRequest\x12M\n" +
-	"\fregistration\x18\x01 \x01(\v2'.taskorchestrator.v1.WorkerRegistrationH\x00R\fregistration\x12D\n" +
-	"\theartbeat\x18\x02 \x01(\v2$.taskorchestrator.v1.WorkerHeartbeatH\x00R\theartbeat\x129\n" +
-	"\x06result\x18\x03 \x01(\v2\x1f.taskorchestrator.v1.TaskResultH\x00R\x06result\x12@\n" +
-	"\tlog_chunk\x18\x04 \x01(\v2!.taskorchestrator.v1.TaskLogChunkH\x00R\blogChunkB\t\n" +
-	"\apayload\"\xde\x01\n" +
-	"\x0fConnectResponse\x12E\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x91\x02\n" +
+	"\x0eConnectRequest\x12F\n" +
+	"\fregistration\x18\x01 \x01(\v2 .dispatchd.v1.WorkerRegistrationH\x00R\fregistration\x12=\n" +
+	"\theartbeat\x18\x02 \x01(\v2\x1d.dispatchd.v1.WorkerHeartbeatH\x00R\theartbeat\x122\n" +
+	"\x06result\x18\x03 \x01(\v2\x18.dispatchd.v1.TaskResultH\x00R\x06result\x129\n" +
+	"\tlog_chunk\x18\x04 \x01(\v2\x1a.dispatchd.v1.TaskLogChunkH\x00R\blogChunkB\t\n" +
+	"\apayload\"\xc9\x01\n" +
+	"\x0fConnectResponse\x12>\n" +
 	"\n" +
-	"assignment\x18\x01 \x01(\v2#.taskorchestrator.v1.TaskAssignmentH\x00R\n" +
-	"assignment\x122\n" +
-	"\x03ack\x18\x02 \x01(\v2\x1e.taskorchestrator.v1.WorkerAckH\x00R\x03ack\x12E\n" +
-	"\fdrain_signal\x18\x03 \x01(\v2 .taskorchestrator.v1.DrainSignalH\x00R\vdrainSignalB\t\n" +
-	"\apayload\"\x8a\x04\n" +
+	"assignment\x18\x01 \x01(\v2\x1c.dispatchd.v1.TaskAssignmentH\x00R\n" +
+	"assignment\x12+\n" +
+	"\x03ack\x18\x02 \x01(\v2\x17.dispatchd.v1.WorkerAckH\x00R\x03ack\x12>\n" +
+	"\fdrain_signal\x18\x03 \x01(\v2\x19.dispatchd.v1.DrainSignalH\x00R\vdrainSignalB\t\n" +
+	"\apayload\"\xf5\x03\n" +
 	"\x03Job\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x19\n" +
 	"\bjob_type\x18\x02 \x01(\tR\ajobType\x12\x18\n" +
-	"\apayload\x18\x03 \x01(\fR\apayload\x126\n" +
-	"\x06status\x18\x04 \x01(\x0e2\x1e.taskorchestrator.v1.JobStatusR\x06status\x12\x1a\n" +
+	"\apayload\x18\x03 \x01(\fR\apayload\x12/\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x17.dispatchd.v1.JobStatusR\x06status\x12\x1a\n" +
 	"\bpriority\x18\x05 \x01(\x05R\bpriority\x12'\n" +
-	"\x0fidempotency_key\x18\x06 \x01(\tR\x0eidempotencyKey\x12B\n" +
-	"\bmetadata\x18\a \x03(\v2&.taskorchestrator.v1.Job.MetadataEntryR\bmetadata\x12C\n" +
-	"\fretry_policy\x18\b \x01(\v2 .taskorchestrator.v1.RetryPolicyR\vretryPolicy\x129\n" +
+	"\x0fidempotency_key\x18\x06 \x01(\tR\x0eidempotencyKey\x12;\n" +
+	"\bmetadata\x18\a \x03(\v2\x1f.dispatchd.v1.Job.MetadataEntryR\bmetadata\x12<\n" +
+	"\fretry_policy\x18\b \x01(\v2\x19.dispatchd.v1.RetryPolicyR\vretryPolicy\x129\n" +
 	"\n" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
@@ -1612,12 +1612,12 @@ const file_taskorchestrator_v1_task_orchestrator_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x92\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8b\x03\n" +
 	"\tExecution\x12!\n" +
 	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\x12\x15\n" +
 	"\x06job_id\x18\x02 \x01(\tR\x05jobId\x12\x18\n" +
-	"\aattempt\x18\x03 \x01(\x05R\aattempt\x12<\n" +
-	"\x06status\x18\x04 \x01(\x0e2$.taskorchestrator.v1.ExecutionStatusR\x06status\x12\x1b\n" +
+	"\aattempt\x18\x03 \x01(\x05R\aattempt\x125\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x1d.dispatchd.v1.ExecutionStatusR\x06status\x12\x1b\n" +
 	"\tworker_id\x18\x05 \x01(\tR\bworkerId\x12#\n" +
 	"\rerror_message\x18\x06 \x01(\tR\ferrorMessage\x129\n" +
 	"\n" +
@@ -1630,31 +1630,31 @@ const file_taskorchestrator_v1_task_orchestrator_proto_rawDesc = "" +
 	"\fmax_attempts\x18\x01 \x01(\x05R\vmaxAttempts\x12B\n" +
 	"\x0finitial_backoff\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x0einitialBackoff\x12:\n" +
 	"\vmax_backoff\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\n" +
-	"maxBackoff\"\x86\x02\n" +
+	"maxBackoff\"\xff\x01\n" +
 	"\x12WorkerRegistration\x12\x1b\n" +
 	"\tworker_id\x18\x01 \x01(\tR\bworkerId\x12\"\n" +
 	"\fcapabilities\x18\x02 \x03(\tR\fcapabilities\x12'\n" +
-	"\x0fmax_concurrency\x18\x03 \x01(\x05R\x0emaxConcurrency\x12K\n" +
-	"\x06labels\x18\x04 \x03(\v23.taskorchestrator.v1.WorkerRegistration.LabelsEntryR\x06labels\x1a9\n" +
+	"\x0fmax_concurrency\x18\x03 \x01(\x05R\x0emaxConcurrency\x12D\n" +
+	"\x06labels\x18\x04 \x03(\v2,.dispatchd.v1.WorkerRegistration.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9a\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x93\x01\n" +
 	"\x0fWorkerHeartbeat\x12\x1b\n" +
-	"\tworker_id\x18\x01 \x01(\tR\bworkerId\x129\n" +
-	"\x06status\x18\x02 \x01(\x0e2!.taskorchestrator.v1.WorkerStatusR\x06status\x12/\n" +
+	"\tworker_id\x18\x01 \x01(\tR\bworkerId\x122\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1a.dispatchd.v1.WorkerStatusR\x06status\x12/\n" +
 	"\x13inflight_executions\x18\x03 \x01(\x05R\x12inflightExecutions\"\xc8\x01\n" +
 	"\x0eTaskAssignment\x12!\n" +
 	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\x12\x19\n" +
 	"\bjob_type\x18\x02 \x01(\tR\ajobType\x12\x18\n" +
 	"\apayload\x18\x03 \x01(\fR\apayload\x12\x18\n" +
 	"\aattempt\x18\x04 \x01(\x05R\aattempt\x12D\n" +
-	"\x10lease_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0eleaseExpiresAt\"\xf6\x01\n" +
+	"\x10lease_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0eleaseExpiresAt\"\xef\x01\n" +
 	"\n" +
 	"TaskResult\x12!\n" +
 	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12#\n" +
-	"\rerror_message\x18\x03 \x01(\tR\ferrorMessage\x12I\n" +
-	"\bmetadata\x18\x04 \x03(\v2-.taskorchestrator.v1.TaskResult.MetadataEntryR\bmetadata\x1a;\n" +
+	"\rerror_message\x18\x03 \x01(\tR\ferrorMessage\x12B\n" +
+	"\bmetadata\x18\x04 \x03(\v2&.dispatchd.v1.TaskResult.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x86\x01\n" +
@@ -1690,101 +1690,101 @@ const file_taskorchestrator_v1_task_orchestrator_proto_rawDesc = "" +
 	"\x13WORKER_STATUS_READY\x10\x01\x12\x16\n" +
 	"\x12WORKER_STATUS_BUSY\x10\x02\x12\x1a\n" +
 	"\x16WORKER_STATUS_DRAINING\x10\x03\x12\x19\n" +
-	"\x15WORKER_STATUS_OFFLINE\x10\x042\x82\x03\n" +
+	"\x15WORKER_STATUS_OFFLINE\x10\x042\xca\x02\n" +
 	"\n" +
-	"JobService\x12Z\n" +
-	"\tSubmitJob\x12%.taskorchestrator.v1.SubmitJobRequest\x1a&.taskorchestrator.v1.SubmitJobResponse\x12Z\n" +
-	"\tCancelJob\x12%.taskorchestrator.v1.CancelJobRequest\x1a&.taskorchestrator.v1.CancelJobResponse\x12Q\n" +
-	"\x06GetJob\x12\".taskorchestrator.v1.GetJobRequest\x1a#.taskorchestrator.v1.GetJobResponse\x12i\n" +
-	"\x0eListExecutions\x12*.taskorchestrator.v1.ListExecutionsRequest\x1a+.taskorchestrator.v1.ListExecutionsResponse2i\n" +
-	"\rWorkerService\x12X\n" +
-	"\aConnect\x12#.taskorchestrator.v1.ConnectRequest\x1a$.taskorchestrator.v1.ConnectResponse(\x010\x01BRZPgithub.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1;taskorchestratorv1b\x06proto3"
+	"JobService\x12L\n" +
+	"\tSubmitJob\x12\x1e.dispatchd.v1.SubmitJobRequest\x1a\x1f.dispatchd.v1.SubmitJobResponse\x12L\n" +
+	"\tCancelJob\x12\x1e.dispatchd.v1.CancelJobRequest\x1a\x1f.dispatchd.v1.CancelJobResponse\x12C\n" +
+	"\x06GetJob\x12\x1b.dispatchd.v1.GetJobRequest\x1a\x1c.dispatchd.v1.GetJobResponse\x12[\n" +
+	"\x0eListExecutions\x12#.dispatchd.v1.ListExecutionsRequest\x1a$.dispatchd.v1.ListExecutionsResponse2[\n" +
+	"\rWorkerService\x12J\n" +
+	"\aConnect\x12\x1c.dispatchd.v1.ConnectRequest\x1a\x1d.dispatchd.v1.ConnectResponse(\x010\x01B<Z:github.com/gnix0/dispatchd/gen/go/dispatchd/v1;dispatchdv1b\x06proto3"
 
 var (
-	file_taskorchestrator_v1_task_orchestrator_proto_rawDescOnce sync.Once
-	file_taskorchestrator_v1_task_orchestrator_proto_rawDescData []byte
+	file_dispatchd_v1_dispatchd_proto_rawDescOnce sync.Once
+	file_dispatchd_v1_dispatchd_proto_rawDescData []byte
 )
 
-func file_taskorchestrator_v1_task_orchestrator_proto_rawDescGZIP() []byte {
-	file_taskorchestrator_v1_task_orchestrator_proto_rawDescOnce.Do(func() {
-		file_taskorchestrator_v1_task_orchestrator_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_taskorchestrator_v1_task_orchestrator_proto_rawDesc), len(file_taskorchestrator_v1_task_orchestrator_proto_rawDesc)))
+func file_dispatchd_v1_dispatchd_proto_rawDescGZIP() []byte {
+	file_dispatchd_v1_dispatchd_proto_rawDescOnce.Do(func() {
+		file_dispatchd_v1_dispatchd_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_dispatchd_v1_dispatchd_proto_rawDesc), len(file_dispatchd_v1_dispatchd_proto_rawDesc)))
 	})
-	return file_taskorchestrator_v1_task_orchestrator_proto_rawDescData
+	return file_dispatchd_v1_dispatchd_proto_rawDescData
 }
 
-var file_taskorchestrator_v1_task_orchestrator_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_taskorchestrator_v1_task_orchestrator_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
-var file_taskorchestrator_v1_task_orchestrator_proto_goTypes = []any{
-	(JobStatus)(0),                 // 0: taskorchestrator.v1.JobStatus
-	(ExecutionStatus)(0),           // 1: taskorchestrator.v1.ExecutionStatus
-	(WorkerStatus)(0),              // 2: taskorchestrator.v1.WorkerStatus
-	(*SubmitJobRequest)(nil),       // 3: taskorchestrator.v1.SubmitJobRequest
-	(*SubmitJobResponse)(nil),      // 4: taskorchestrator.v1.SubmitJobResponse
-	(*CancelJobRequest)(nil),       // 5: taskorchestrator.v1.CancelJobRequest
-	(*CancelJobResponse)(nil),      // 6: taskorchestrator.v1.CancelJobResponse
-	(*GetJobRequest)(nil),          // 7: taskorchestrator.v1.GetJobRequest
-	(*GetJobResponse)(nil),         // 8: taskorchestrator.v1.GetJobResponse
-	(*ListExecutionsRequest)(nil),  // 9: taskorchestrator.v1.ListExecutionsRequest
-	(*ListExecutionsResponse)(nil), // 10: taskorchestrator.v1.ListExecutionsResponse
-	(*ConnectRequest)(nil),         // 11: taskorchestrator.v1.ConnectRequest
-	(*ConnectResponse)(nil),        // 12: taskorchestrator.v1.ConnectResponse
-	(*Job)(nil),                    // 13: taskorchestrator.v1.Job
-	(*Execution)(nil),              // 14: taskorchestrator.v1.Execution
-	(*RetryPolicy)(nil),            // 15: taskorchestrator.v1.RetryPolicy
-	(*WorkerRegistration)(nil),     // 16: taskorchestrator.v1.WorkerRegistration
-	(*WorkerHeartbeat)(nil),        // 17: taskorchestrator.v1.WorkerHeartbeat
-	(*TaskAssignment)(nil),         // 18: taskorchestrator.v1.TaskAssignment
-	(*TaskResult)(nil),             // 19: taskorchestrator.v1.TaskResult
-	(*TaskLogChunk)(nil),           // 20: taskorchestrator.v1.TaskLogChunk
-	(*WorkerAck)(nil),              // 21: taskorchestrator.v1.WorkerAck
-	(*DrainSignal)(nil),            // 22: taskorchestrator.v1.DrainSignal
-	nil,                            // 23: taskorchestrator.v1.SubmitJobRequest.MetadataEntry
-	nil,                            // 24: taskorchestrator.v1.Job.MetadataEntry
-	nil,                            // 25: taskorchestrator.v1.WorkerRegistration.LabelsEntry
-	nil,                            // 26: taskorchestrator.v1.TaskResult.MetadataEntry
+var file_dispatchd_v1_dispatchd_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_dispatchd_v1_dispatchd_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_dispatchd_v1_dispatchd_proto_goTypes = []any{
+	(JobStatus)(0),                 // 0: dispatchd.v1.JobStatus
+	(ExecutionStatus)(0),           // 1: dispatchd.v1.ExecutionStatus
+	(WorkerStatus)(0),              // 2: dispatchd.v1.WorkerStatus
+	(*SubmitJobRequest)(nil),       // 3: dispatchd.v1.SubmitJobRequest
+	(*SubmitJobResponse)(nil),      // 4: dispatchd.v1.SubmitJobResponse
+	(*CancelJobRequest)(nil),       // 5: dispatchd.v1.CancelJobRequest
+	(*CancelJobResponse)(nil),      // 6: dispatchd.v1.CancelJobResponse
+	(*GetJobRequest)(nil),          // 7: dispatchd.v1.GetJobRequest
+	(*GetJobResponse)(nil),         // 8: dispatchd.v1.GetJobResponse
+	(*ListExecutionsRequest)(nil),  // 9: dispatchd.v1.ListExecutionsRequest
+	(*ListExecutionsResponse)(nil), // 10: dispatchd.v1.ListExecutionsResponse
+	(*ConnectRequest)(nil),         // 11: dispatchd.v1.ConnectRequest
+	(*ConnectResponse)(nil),        // 12: dispatchd.v1.ConnectResponse
+	(*Job)(nil),                    // 13: dispatchd.v1.Job
+	(*Execution)(nil),              // 14: dispatchd.v1.Execution
+	(*RetryPolicy)(nil),            // 15: dispatchd.v1.RetryPolicy
+	(*WorkerRegistration)(nil),     // 16: dispatchd.v1.WorkerRegistration
+	(*WorkerHeartbeat)(nil),        // 17: dispatchd.v1.WorkerHeartbeat
+	(*TaskAssignment)(nil),         // 18: dispatchd.v1.TaskAssignment
+	(*TaskResult)(nil),             // 19: dispatchd.v1.TaskResult
+	(*TaskLogChunk)(nil),           // 20: dispatchd.v1.TaskLogChunk
+	(*WorkerAck)(nil),              // 21: dispatchd.v1.WorkerAck
+	(*DrainSignal)(nil),            // 22: dispatchd.v1.DrainSignal
+	nil,                            // 23: dispatchd.v1.SubmitJobRequest.MetadataEntry
+	nil,                            // 24: dispatchd.v1.Job.MetadataEntry
+	nil,                            // 25: dispatchd.v1.WorkerRegistration.LabelsEntry
+	nil,                            // 26: dispatchd.v1.TaskResult.MetadataEntry
 	(*timestamppb.Timestamp)(nil),  // 27: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),    // 28: google.protobuf.Duration
 }
-var file_taskorchestrator_v1_task_orchestrator_proto_depIdxs = []int32{
-	23, // 0: taskorchestrator.v1.SubmitJobRequest.metadata:type_name -> taskorchestrator.v1.SubmitJobRequest.MetadataEntry
-	15, // 1: taskorchestrator.v1.SubmitJobRequest.retry_policy:type_name -> taskorchestrator.v1.RetryPolicy
-	13, // 2: taskorchestrator.v1.SubmitJobResponse.job:type_name -> taskorchestrator.v1.Job
-	13, // 3: taskorchestrator.v1.CancelJobResponse.job:type_name -> taskorchestrator.v1.Job
-	13, // 4: taskorchestrator.v1.GetJobResponse.job:type_name -> taskorchestrator.v1.Job
-	14, // 5: taskorchestrator.v1.ListExecutionsResponse.executions:type_name -> taskorchestrator.v1.Execution
-	16, // 6: taskorchestrator.v1.ConnectRequest.registration:type_name -> taskorchestrator.v1.WorkerRegistration
-	17, // 7: taskorchestrator.v1.ConnectRequest.heartbeat:type_name -> taskorchestrator.v1.WorkerHeartbeat
-	19, // 8: taskorchestrator.v1.ConnectRequest.result:type_name -> taskorchestrator.v1.TaskResult
-	20, // 9: taskorchestrator.v1.ConnectRequest.log_chunk:type_name -> taskorchestrator.v1.TaskLogChunk
-	18, // 10: taskorchestrator.v1.ConnectResponse.assignment:type_name -> taskorchestrator.v1.TaskAssignment
-	21, // 11: taskorchestrator.v1.ConnectResponse.ack:type_name -> taskorchestrator.v1.WorkerAck
-	22, // 12: taskorchestrator.v1.ConnectResponse.drain_signal:type_name -> taskorchestrator.v1.DrainSignal
-	0,  // 13: taskorchestrator.v1.Job.status:type_name -> taskorchestrator.v1.JobStatus
-	24, // 14: taskorchestrator.v1.Job.metadata:type_name -> taskorchestrator.v1.Job.MetadataEntry
-	15, // 15: taskorchestrator.v1.Job.retry_policy:type_name -> taskorchestrator.v1.RetryPolicy
-	27, // 16: taskorchestrator.v1.Job.created_at:type_name -> google.protobuf.Timestamp
-	27, // 17: taskorchestrator.v1.Job.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 18: taskorchestrator.v1.Execution.status:type_name -> taskorchestrator.v1.ExecutionStatus
-	27, // 19: taskorchestrator.v1.Execution.claimed_at:type_name -> google.protobuf.Timestamp
-	27, // 20: taskorchestrator.v1.Execution.started_at:type_name -> google.protobuf.Timestamp
-	27, // 21: taskorchestrator.v1.Execution.finished_at:type_name -> google.protobuf.Timestamp
-	28, // 22: taskorchestrator.v1.RetryPolicy.initial_backoff:type_name -> google.protobuf.Duration
-	28, // 23: taskorchestrator.v1.RetryPolicy.max_backoff:type_name -> google.protobuf.Duration
-	25, // 24: taskorchestrator.v1.WorkerRegistration.labels:type_name -> taskorchestrator.v1.WorkerRegistration.LabelsEntry
-	2,  // 25: taskorchestrator.v1.WorkerHeartbeat.status:type_name -> taskorchestrator.v1.WorkerStatus
-	27, // 26: taskorchestrator.v1.TaskAssignment.lease_expires_at:type_name -> google.protobuf.Timestamp
-	26, // 27: taskorchestrator.v1.TaskResult.metadata:type_name -> taskorchestrator.v1.TaskResult.MetadataEntry
-	27, // 28: taskorchestrator.v1.TaskLogChunk.emitted_at:type_name -> google.protobuf.Timestamp
-	3,  // 29: taskorchestrator.v1.JobService.SubmitJob:input_type -> taskorchestrator.v1.SubmitJobRequest
-	5,  // 30: taskorchestrator.v1.JobService.CancelJob:input_type -> taskorchestrator.v1.CancelJobRequest
-	7,  // 31: taskorchestrator.v1.JobService.GetJob:input_type -> taskorchestrator.v1.GetJobRequest
-	9,  // 32: taskorchestrator.v1.JobService.ListExecutions:input_type -> taskorchestrator.v1.ListExecutionsRequest
-	11, // 33: taskorchestrator.v1.WorkerService.Connect:input_type -> taskorchestrator.v1.ConnectRequest
-	4,  // 34: taskorchestrator.v1.JobService.SubmitJob:output_type -> taskorchestrator.v1.SubmitJobResponse
-	6,  // 35: taskorchestrator.v1.JobService.CancelJob:output_type -> taskorchestrator.v1.CancelJobResponse
-	8,  // 36: taskorchestrator.v1.JobService.GetJob:output_type -> taskorchestrator.v1.GetJobResponse
-	10, // 37: taskorchestrator.v1.JobService.ListExecutions:output_type -> taskorchestrator.v1.ListExecutionsResponse
-	12, // 38: taskorchestrator.v1.WorkerService.Connect:output_type -> taskorchestrator.v1.ConnectResponse
+var file_dispatchd_v1_dispatchd_proto_depIdxs = []int32{
+	23, // 0: dispatchd.v1.SubmitJobRequest.metadata:type_name -> dispatchd.v1.SubmitJobRequest.MetadataEntry
+	15, // 1: dispatchd.v1.SubmitJobRequest.retry_policy:type_name -> dispatchd.v1.RetryPolicy
+	13, // 2: dispatchd.v1.SubmitJobResponse.job:type_name -> dispatchd.v1.Job
+	13, // 3: dispatchd.v1.CancelJobResponse.job:type_name -> dispatchd.v1.Job
+	13, // 4: dispatchd.v1.GetJobResponse.job:type_name -> dispatchd.v1.Job
+	14, // 5: dispatchd.v1.ListExecutionsResponse.executions:type_name -> dispatchd.v1.Execution
+	16, // 6: dispatchd.v1.ConnectRequest.registration:type_name -> dispatchd.v1.WorkerRegistration
+	17, // 7: dispatchd.v1.ConnectRequest.heartbeat:type_name -> dispatchd.v1.WorkerHeartbeat
+	19, // 8: dispatchd.v1.ConnectRequest.result:type_name -> dispatchd.v1.TaskResult
+	20, // 9: dispatchd.v1.ConnectRequest.log_chunk:type_name -> dispatchd.v1.TaskLogChunk
+	18, // 10: dispatchd.v1.ConnectResponse.assignment:type_name -> dispatchd.v1.TaskAssignment
+	21, // 11: dispatchd.v1.ConnectResponse.ack:type_name -> dispatchd.v1.WorkerAck
+	22, // 12: dispatchd.v1.ConnectResponse.drain_signal:type_name -> dispatchd.v1.DrainSignal
+	0,  // 13: dispatchd.v1.Job.status:type_name -> dispatchd.v1.JobStatus
+	24, // 14: dispatchd.v1.Job.metadata:type_name -> dispatchd.v1.Job.MetadataEntry
+	15, // 15: dispatchd.v1.Job.retry_policy:type_name -> dispatchd.v1.RetryPolicy
+	27, // 16: dispatchd.v1.Job.created_at:type_name -> google.protobuf.Timestamp
+	27, // 17: dispatchd.v1.Job.updated_at:type_name -> google.protobuf.Timestamp
+	1,  // 18: dispatchd.v1.Execution.status:type_name -> dispatchd.v1.ExecutionStatus
+	27, // 19: dispatchd.v1.Execution.claimed_at:type_name -> google.protobuf.Timestamp
+	27, // 20: dispatchd.v1.Execution.started_at:type_name -> google.protobuf.Timestamp
+	27, // 21: dispatchd.v1.Execution.finished_at:type_name -> google.protobuf.Timestamp
+	28, // 22: dispatchd.v1.RetryPolicy.initial_backoff:type_name -> google.protobuf.Duration
+	28, // 23: dispatchd.v1.RetryPolicy.max_backoff:type_name -> google.protobuf.Duration
+	25, // 24: dispatchd.v1.WorkerRegistration.labels:type_name -> dispatchd.v1.WorkerRegistration.LabelsEntry
+	2,  // 25: dispatchd.v1.WorkerHeartbeat.status:type_name -> dispatchd.v1.WorkerStatus
+	27, // 26: dispatchd.v1.TaskAssignment.lease_expires_at:type_name -> google.protobuf.Timestamp
+	26, // 27: dispatchd.v1.TaskResult.metadata:type_name -> dispatchd.v1.TaskResult.MetadataEntry
+	27, // 28: dispatchd.v1.TaskLogChunk.emitted_at:type_name -> google.protobuf.Timestamp
+	3,  // 29: dispatchd.v1.JobService.SubmitJob:input_type -> dispatchd.v1.SubmitJobRequest
+	5,  // 30: dispatchd.v1.JobService.CancelJob:input_type -> dispatchd.v1.CancelJobRequest
+	7,  // 31: dispatchd.v1.JobService.GetJob:input_type -> dispatchd.v1.GetJobRequest
+	9,  // 32: dispatchd.v1.JobService.ListExecutions:input_type -> dispatchd.v1.ListExecutionsRequest
+	11, // 33: dispatchd.v1.WorkerService.Connect:input_type -> dispatchd.v1.ConnectRequest
+	4,  // 34: dispatchd.v1.JobService.SubmitJob:output_type -> dispatchd.v1.SubmitJobResponse
+	6,  // 35: dispatchd.v1.JobService.CancelJob:output_type -> dispatchd.v1.CancelJobResponse
+	8,  // 36: dispatchd.v1.JobService.GetJob:output_type -> dispatchd.v1.GetJobResponse
+	10, // 37: dispatchd.v1.JobService.ListExecutions:output_type -> dispatchd.v1.ListExecutionsResponse
+	12, // 38: dispatchd.v1.WorkerService.Connect:output_type -> dispatchd.v1.ConnectResponse
 	34, // [34:39] is the sub-list for method output_type
 	29, // [29:34] is the sub-list for method input_type
 	29, // [29:29] is the sub-list for extension type_name
@@ -1792,18 +1792,18 @@ var file_taskorchestrator_v1_task_orchestrator_proto_depIdxs = []int32{
 	0,  // [0:29] is the sub-list for field type_name
 }
 
-func init() { file_taskorchestrator_v1_task_orchestrator_proto_init() }
-func file_taskorchestrator_v1_task_orchestrator_proto_init() {
-	if File_taskorchestrator_v1_task_orchestrator_proto != nil {
+func init() { file_dispatchd_v1_dispatchd_proto_init() }
+func file_dispatchd_v1_dispatchd_proto_init() {
+	if File_dispatchd_v1_dispatchd_proto != nil {
 		return
 	}
-	file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[8].OneofWrappers = []any{
+	file_dispatchd_v1_dispatchd_proto_msgTypes[8].OneofWrappers = []any{
 		(*ConnectRequest_Registration)(nil),
 		(*ConnectRequest_Heartbeat)(nil),
 		(*ConnectRequest_Result)(nil),
 		(*ConnectRequest_LogChunk)(nil),
 	}
-	file_taskorchestrator_v1_task_orchestrator_proto_msgTypes[9].OneofWrappers = []any{
+	file_dispatchd_v1_dispatchd_proto_msgTypes[9].OneofWrappers = []any{
 		(*ConnectResponse_Assignment)(nil),
 		(*ConnectResponse_Ack)(nil),
 		(*ConnectResponse_DrainSignal)(nil),
@@ -1812,18 +1812,18 @@ func file_taskorchestrator_v1_task_orchestrator_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_taskorchestrator_v1_task_orchestrator_proto_rawDesc), len(file_taskorchestrator_v1_task_orchestrator_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dispatchd_v1_dispatchd_proto_rawDesc), len(file_dispatchd_v1_dispatchd_proto_rawDesc)),
 			NumEnums:      3,
 			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_taskorchestrator_v1_task_orchestrator_proto_goTypes,
-		DependencyIndexes: file_taskorchestrator_v1_task_orchestrator_proto_depIdxs,
-		EnumInfos:         file_taskorchestrator_v1_task_orchestrator_proto_enumTypes,
-		MessageInfos:      file_taskorchestrator_v1_task_orchestrator_proto_msgTypes,
+		GoTypes:           file_dispatchd_v1_dispatchd_proto_goTypes,
+		DependencyIndexes: file_dispatchd_v1_dispatchd_proto_depIdxs,
+		EnumInfos:         file_dispatchd_v1_dispatchd_proto_enumTypes,
+		MessageInfos:      file_dispatchd_v1_dispatchd_proto_msgTypes,
 	}.Build()
-	File_taskorchestrator_v1_task_orchestrator_proto = out.File
-	file_taskorchestrator_v1_task_orchestrator_proto_goTypes = nil
-	file_taskorchestrator_v1_task_orchestrator_proto_depIdxs = nil
+	File_dispatchd_v1_dispatchd_proto = out.File
+	file_dispatchd_v1_dispatchd_proto_goTypes = nil
+	file_dispatchd_v1_dispatchd_proto_depIdxs = nil
 }

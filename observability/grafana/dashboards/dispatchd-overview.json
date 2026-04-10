@@ -40,7 +40,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (service, method, code) (rate(task_orchestrator_grpc_server_requests_total[5m]))",
+          "expr": "sum by (service, method, code) (rate(dispatchd_grpc_server_requests_total[5m]))",
           "legendFormat": "{{service}} {{method}} {{code}}",
           "refId": "A"
         }
@@ -81,7 +81,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, service, method) (rate(task_orchestrator_grpc_server_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, service, method) (rate(dispatchd_grpc_server_request_duration_seconds_bucket[5m])))",
           "legendFormat": "{{service}} {{method}}",
           "refId": "A"
         }
@@ -121,7 +121,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (service, event, outcome) (rate(task_orchestrator_worker_events_total[5m]))",
+          "expr": "sum by (service, event, outcome) (rate(dispatchd_worker_events_total[5m]))",
           "legendFormat": "{{service}} {{event}} {{outcome}}",
           "refId": "A"
         }
@@ -161,7 +161,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (service, outcome) (rate(task_orchestrator_scheduler_ticks_total[5m]))",
+          "expr": "sum by (service, outcome) (rate(dispatchd_scheduler_ticks_total[5m]))",
           "legendFormat": "{{service}} {{outcome}}",
           "refId": "A"
         }
@@ -201,7 +201,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (service, event, outcome) (rate(task_orchestrator_dispatch_events_total[5m]))",
+          "expr": "sum by (service, event, outcome) (rate(dispatchd_dispatch_events_total[5m]))",
           "legendFormat": "{{service}} {{event}} {{outcome}}",
           "refId": "A"
         }
@@ -242,7 +242,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(task_orchestrator_scheduler_tick_duration_seconds_sum[5m]) / rate(task_orchestrator_scheduler_tick_duration_seconds_count[5m])",
+          "expr": "rate(dispatchd_scheduler_tick_duration_seconds_sum[5m]) / rate(dispatchd_scheduler_tick_duration_seconds_count[5m])",
           "legendFormat": "scheduler avg tick",
           "refId": "A"
         }
@@ -255,7 +255,7 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "task-orchestrator",
+    "dispatchd",
     "performance"
   ],
   "templating": {
@@ -267,8 +267,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Task Orchestrator Overview",
-  "uid": "task-orchestrator-overview",
+  "title": "Dispatchd Overview",
+  "uid": "dispatchd-overview",
   "version": 1,
   "weekStart": ""
 }

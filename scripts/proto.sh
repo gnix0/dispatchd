@@ -2,7 +2,7 @@
 
 set -eu
 
-IMAGE_NAME="task-orchestrator-proto-tools"
+IMAGE_NAME="dispatchd-proto-tools"
 REPO_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 DOCKER_RUN_USER="$(id -u):$(id -g)"
 

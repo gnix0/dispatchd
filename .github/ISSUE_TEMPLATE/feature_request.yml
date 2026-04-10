@@ -1,0 +1,25 @@
+name: Feature Request
+description: Propose a capability or improvement for dispatchd.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What operational or product problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Change
+      description: Describe the expected behavior, interface, or workflow change.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Note expected effects on APIs, deployments, performance, security, or documentation.

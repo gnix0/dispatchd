@@ -61,7 +61,7 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 		t.Fatalf("expected default shutdown timeout 10s, got %s", got.ShutdownTimeout)
 	}
 
-	if got.DatabaseURL != "postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable" {
+	if got.DatabaseURL != "postgres://postgres:postgres@postgres:5432/dispatchd?sslmode=disable" {
 		t.Fatalf("unexpected default database url: %q", got.DatabaseURL)
 	}
 
@@ -89,12 +89,12 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 		t.Fatal("expected auth to be disabled by default")
 	}
 
-	if got.AuthJWTIssuer != "task-orchestrator" {
-		t.Fatalf("expected default auth issuer task-orchestrator, got %q", got.AuthJWTIssuer)
+	if got.AuthJWTIssuer != "dispatchd" {
+		t.Fatalf("expected default auth issuer dispatchd, got %q", got.AuthJWTIssuer)
 	}
 
-	if got.AuthJWTAudience != "task-orchestrator-clients" {
-		t.Fatalf("expected default auth audience task-orchestrator-clients, got %q", got.AuthJWTAudience)
+	if got.AuthJWTAudience != "dispatchd-clients" {
+		t.Fatalf("expected default auth audience dispatchd-clients, got %q", got.AuthJWTAudience)
 	}
 
 	if !got.AuditLogEnabled {

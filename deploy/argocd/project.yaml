@@ -1,13 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: task-orchestrator
+  name: dispatchd
   namespace: argocd
 spec:
   sourceRepos:
-    - https://github.com/gnix0/task-orchestrator.git
+    - https://github.com/gnix0/dispatchd.git
   destinations:
-    - namespace: task-orchestrator-dev
+    - namespace: dispatchd-dev
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"

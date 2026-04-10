@@ -31,14 +31,14 @@ case "${PROFILE}" in
     ;;
 esac
 
-docker build --build-arg SERVICE=perf-worker -t task-orchestrator-perf-worker:local "${REPO_ROOT}"
+docker build --build-arg SERVICE=perf-worker -t dispatchd-perf-worker:local "${REPO_ROOT}"
 
 docker run --rm \
   --network host \
   --user "$(id -u):$(id -g)" \
   -v "${REPO_ROOT}:/workspace" \
   -w /workspace \
-  task-orchestrator-perf-worker:local \
+  dispatchd-perf-worker:local \
   -profile "${PROFILE}" \
   -target "${WORKER_GATEWAY_TARGET:-127.0.0.1:8081}" \
   -workers "${PERF_WORKERS:-${WORKERS}}" \
