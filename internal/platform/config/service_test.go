@@ -9,6 +9,15 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	t.Setenv("APP_ENV", "")
 	t.Setenv("LOG_LEVEL", "")
 	t.Setenv("SHUTDOWN_TIMEOUT_SECONDS", "")
+	t.Setenv("DATABASE_URL", "")
+	t.Setenv("REDIS_ADDRESS", "")
+	t.Setenv("INSTANCE_ID", "")
+	t.Setenv("HOSTNAME", "")
+	t.Setenv("SCHEDULER_POLL_INTERVAL", "")
+	t.Setenv("LEASE_DURATION", "")
+	t.Setenv("WORKER_HEARTBEAT_TTL", "")
+	t.Setenv("READY_QUEUE_PREFIX", "")
+	t.Setenv("SCHEDULER_LEADER_KEY", "")
 
 	got := Load("control-plane")
 
@@ -31,6 +40,30 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	if got.ShutdownTimeout != 10*time.Second {
 		t.Fatalf("expected default shutdown timeout 10s, got %s", got.ShutdownTimeout)
 	}
+
+	if got.DatabaseURL != "postgres://postgres:postgres@postgres:5432/task_orchestrator?sslmode=disable" {
+		t.Fatalf("unexpected default database url: %q", got.DatabaseURL)
+	}
+
+	if got.RedisAddress != "redis:6379" {
+		t.Fatalf("expected default redis address redis:6379, got %q", got.RedisAddress)
+	}
+
+	if got.InstanceID != "control-plane" {
+		t.Fatalf("expected fallback instance id control-plane, got %q", got.InstanceID)
+	}
+
+	if got.SchedulerPollInterval != 2*time.Second {
+		t.Fatalf("expected default scheduler poll interval 2s, got %s", got.SchedulerPollInterval)
+	}
+
+	if got.LeaseDuration != 30*time.Second {
+		t.Fatalf("expected default lease duration 30s, got %s", got.LeaseDuration)
+	}
+
+	if got.WorkerHeartbeatTTL != 45*time.Second {
+		t.Fatalf("expected default heartbeat ttl 45s, got %s", got.WorkerHeartbeatTTL)
+	}
 }
 
 func TestLoadUsesEnvironmentOverrides(t *testing.T) {
@@ -38,6 +71,15 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("LOG_LEVEL", "debug")
 	t.Setenv("GRPC_PORT", "9090")
 	t.Setenv("SHUTDOWN_TIMEOUT_SECONDS", "45")
+	t.Setenv("DATABASE_URL", "postgres://custom")
+	t.Setenv("REDIS_ADDRESS", "redis.example:6380")
+	t.Setenv("REDIS_DB", "5")
+	t.Setenv("INSTANCE_ID", "scheduler-1")
+	t.Setenv("SCHEDULER_POLL_INTERVAL", "5s")
+	t.Setenv("LEASE_DURATION", "90s")
+	t.Setenv("WORKER_HEARTBEAT_TTL", "2m")
+	t.Setenv("READY_QUEUE_PREFIX", "custom:ready")
+	t.Setenv("SCHEDULER_LEADER_KEY", "custom:leader")
 
 	got := Load("scheduler")
 
@@ -55,5 +97,41 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 
 	if got.ShutdownTimeout != 45*time.Second {
 		t.Fatalf("expected shutdown timeout 45s, got %s", got.ShutdownTimeout)
+	}
+
+	if got.DatabaseURL != "postgres://custom" {
+		t.Fatalf("expected overridden database url, got %q", got.DatabaseURL)
+	}
+
+	if got.RedisAddress != "redis.example:6380" {
+		t.Fatalf("expected overridden redis address, got %q", got.RedisAddress)
+	}
+
+	if got.RedisDB != 5 {
+		t.Fatalf("expected redis db 5, got %d", got.RedisDB)
+	}
+
+	if got.InstanceID != "scheduler-1" {
+		t.Fatalf("expected instance id scheduler-1, got %q", got.InstanceID)
+	}
+
+	if got.SchedulerPollInterval != 5*time.Second {
+		t.Fatalf("expected scheduler poll interval 5s, got %s", got.SchedulerPollInterval)
+	}
+
+	if got.LeaseDuration != 90*time.Second {
+		t.Fatalf("expected lease duration 90s, got %s", got.LeaseDuration)
+	}
+
+	if got.WorkerHeartbeatTTL != 2*time.Minute {
+		t.Fatalf("expected worker heartbeat ttl 2m, got %s", got.WorkerHeartbeatTTL)
+	}
+
+	if got.ReadyQueuePrefix != "custom:ready" {
+		t.Fatalf("expected ready queue prefix custom:ready, got %q", got.ReadyQueuePrefix)
+	}
+
+	if got.SchedulerLeaderKey != "custom:leader" {
+		t.Fatalf("expected scheduler leader key custom:leader, got %q", got.SchedulerLeaderKey)
 	}
 }

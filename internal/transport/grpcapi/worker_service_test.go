@@ -4,8 +4,10 @@ import (
 	"context"
 	"io"
 	"testing"
+	"time"
 
 	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
+	"github.com/gnix0/task-orchestrator/internal/application/jobs"
 	"github.com/gnix0/task-orchestrator/internal/application/workers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -14,7 +16,11 @@ import (
 
 func TestConnectRegistersWorkerAndAcceptsHeartbeat(t *testing.T) {
 	workerApplication := workers.NewInMemoryService()
-	service := &WorkerService{workerApplication: workerApplication}
+	service := &WorkerService{
+		workerApplication: workerApplication,
+		dispatchService:   &fakeDispatchService{},
+		leaseDuration:     30 * time.Second,
+	}
 	stream := &fakeWorkerConnectStream{
 		ctx: context.Background(),
 		recvMessages: []*taskorchestratorv1.ConnectRequest{
@@ -68,7 +74,11 @@ func TestConnectRegistersWorkerAndAcceptsHeartbeat(t *testing.T) {
 }
 
 func TestConnectRejectsMissingPayload(t *testing.T) {
-	service := &WorkerService{workerApplication: workers.NewInMemoryService()}
+	service := &WorkerService{
+		workerApplication: workers.NewInMemoryService(),
+		dispatchService:   &fakeDispatchService{},
+		leaseDuration:     30 * time.Second,
+	}
 	stream := &fakeWorkerConnectStream{
 		ctx:          context.Background(),
 		recvMessages: []*taskorchestratorv1.ConnectRequest{{}},
@@ -80,8 +90,13 @@ func TestConnectRejectsMissingPayload(t *testing.T) {
 	}
 }
 
-func TestConnectRejectsUnsupportedTaskResult(t *testing.T) {
-	service := &WorkerService{workerApplication: workers.NewInMemoryService()}
+func TestConnectAcceptsTaskResult(t *testing.T) {
+	dispatcher := &fakeDispatchService{}
+	service := &WorkerService{
+		workerApplication: workers.NewInMemoryService(),
+		dispatchService:   dispatcher,
+		leaseDuration:     30 * time.Second,
+	}
 	stream := &fakeWorkerConnectStream{
 		ctx: context.Background(),
 		recvMessages: []*taskorchestratorv1.ConnectRequest{
@@ -94,9 +109,37 @@ func TestConnectRejectsUnsupportedTaskResult(t *testing.T) {
 	}
 
 	err := service.Connect(stream)
-	if status.Code(err) != codes.Unimplemented {
-		t.Fatalf("expected Unimplemented, got %v", status.Code(err))
+	if err != nil {
+		t.Fatalf("expected task result to succeed, got %v", err)
 	}
+	if dispatcher.completedExecutionID != "exec-1" {
+		t.Fatalf("expected completion to be delegated, got %q", dispatcher.completedExecutionID)
+	}
+}
+
+type fakeDispatchService struct {
+	completedExecutionID string
+}
+
+func (f *fakeDispatchService) ClaimNextForWorker(context.Context, jobs.ClaimForWorkerInput, time.Duration) (*jobs.Assignment, error) {
+	return nil, nil
+}
+
+func (f *fakeDispatchService) RenewLeasesForWorker(context.Context, string, time.Duration) error {
+	return nil
+}
+
+func (f *fakeDispatchService) CompleteExecution(_ context.Context, input jobs.CompleteExecutionInput) (jobs.Execution, jobs.Job, error) {
+	f.completedExecutionID = input.ExecutionID
+	return jobs.Execution{ID: input.ExecutionID, Status: jobs.ExecutionStatusSucceeded}, jobs.Job{ID: "job-1", Status: jobs.StatusSucceeded}, nil
+}
+
+func (f *fakeDispatchService) FailExecution(_ context.Context, input jobs.FailExecutionInput) (jobs.Execution, *jobs.Execution, jobs.Job, error) {
+	return jobs.Execution{ID: input.ExecutionID, Status: jobs.ExecutionStatusFailed}, nil, jobs.Job{ID: "job-1", Status: jobs.StatusFailed}, nil
+}
+
+func (f *fakeDispatchService) ReleaseExecution(context.Context, string, string) error {
+	return nil
 }
 
 type fakeWorkerConnectStream struct {

@@ -11,23 +11,30 @@ import (
 type Service struct {
 	logger        *slog.Logger
 	store         jobs.SchedulerStore
+	instanceID    string
 	pollInterval  time.Duration
 	leaseDuration time.Duration
+	workerTTL     time.Duration
 }
 
-func NewService(logger *slog.Logger, store jobs.SchedulerStore, pollInterval, leaseDuration time.Duration) *Service {
+func NewService(logger *slog.Logger, store jobs.SchedulerStore, instanceID string, pollInterval, leaseDuration, workerTTL time.Duration) *Service {
 	if pollInterval <= 0 {
 		pollInterval = 2 * time.Second
 	}
 	if leaseDuration <= 0 {
 		leaseDuration = 30 * time.Second
 	}
+	if workerTTL <= 0 {
+		workerTTL = 45 * time.Second
+	}
 
 	return &Service{
 		logger:        logger,
 		store:         store,
+		instanceID:    instanceID,
 		pollInterval:  pollInterval,
 		leaseDuration: leaseDuration,
+		workerTTL:     workerTTL,
 	}
 }
 
@@ -52,48 +59,35 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) Tick(ctx context.Context) (bool, error) {
-	execution, job, ok, err := s.store.ClaimNextRunnable(ctx, s.leaseDuration)
+	isLeader, err := s.store.TryAcquireLeadership(ctx, s.instanceID, s.pollInterval*3)
+	if err != nil {
+		return false, err
+	}
+	if !isLeader {
+		s.logger.Debug("scheduler tick skipped because instance is not leader")
+		return false, nil
+	}
+
+	requeued, err := s.store.RequeueExpiredExecutions(ctx, s.workerTTL, 256)
 	if err != nil {
 		return false, err
 	}
 
-	if !ok {
-		s.logger.Debug("scheduler tick found no runnable executions")
+	enqueued, err := s.store.EnqueueRunnableExecutions(ctx, 256)
+	if err != nil {
+		return false, err
+	}
+
+	if requeued == 0 && enqueued == 0 {
+		s.logger.Debug("scheduler tick found no runnable or expired executions")
 		return false, nil
 	}
 
 	s.logger.Info(
-		"execution claimed for dispatch",
-		slog.String("job_id", job.ID),
-		slog.String("execution_id", execution.ID),
-		slog.Int64("attempt", int64(execution.Attempt)),
+		"scheduler reconciled execution queues",
+		slog.Int("requeued_expired", requeued),
+		slog.Int("enqueued_runnable", enqueued),
 	)
 
 	return true, nil
-}
-
-func (s *Service) HandleDispatchFailure(ctx context.Context, executionID, reason string) error {
-	failedExecution, nextExecution, job, err := s.store.MarkExecutionFailed(ctx, executionID, reason)
-	if err != nil {
-		return err
-	}
-
-	if nextExecution != nil {
-		s.logger.Info(
-			"execution failed and was rescheduled",
-			slog.String("job_id", job.ID),
-			slog.String("failed_execution_id", failedExecution.ID),
-			slog.String("next_execution_id", nextExecution.ID),
-			slog.Int64("next_attempt", int64(nextExecution.Attempt)),
-		)
-		return nil
-	}
-
-	s.logger.Info(
-		"execution failed terminally",
-		slog.String("job_id", job.ID),
-		slog.String("execution_id", failedExecution.ID),
-		slog.String("status", failedExecution.Status),
-	)
-	return nil
 }

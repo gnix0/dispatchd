@@ -6,64 +6,57 @@ import (
 	"log/slog"
 	"testing"
 	"time"
-
-	"github.com/gnix0/task-orchestrator/internal/application/jobs"
 )
 
 func TestTickClaimsRunnableExecution(t *testing.T) {
 	store := &fakeStore{
-		execution: jobs.Execution{ID: "exec-1", Attempt: 1},
-		job:       jobs.Job{ID: "job-1"},
-		ok:        true,
+		leader:   true,
+		requeued: 1,
+		enqueued: 2,
 	}
-	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, time.Second, 10*time.Second)
+	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-a", time.Second, 10*time.Second, 45*time.Second)
 
 	claimed, err := service.Tick(context.Background())
 	if err != nil {
 		t.Fatalf("expected tick to succeed, got %v", err)
 	}
 	if !claimed {
-		t.Fatal("expected tick to claim an execution")
+		t.Fatal("expected tick to reconcile work")
 	}
-	if store.claimLeaseDuration != 10*time.Second {
-		t.Fatalf("expected claim lease duration 10s, got %s", store.claimLeaseDuration)
+	if store.leaderInstanceID != "scheduler-a" {
+		t.Fatalf("expected leader instance id scheduler-a, got %q", store.leaderInstanceID)
 	}
 }
 
-func TestHandleDispatchFailureDelegatesToStore(t *testing.T) {
-	store := &fakeStore{
-		failedExecution: jobs.Execution{ID: "exec-1", Status: jobs.ExecutionStatusFailed},
-		nextExecution:   &jobs.Execution{ID: "exec-2", Attempt: 2},
-		job:             jobs.Job{ID: "job-1"},
-	}
-	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, time.Second, 10*time.Second)
+func TestTickReturnsFalseForStandbyInstance(t *testing.T) {
+	store := &fakeStore{leader: false}
+	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-b", time.Second, 10*time.Second, 45*time.Second)
 
-	if err := service.HandleDispatchFailure(context.Background(), "exec-1", "dispatch timeout"); err != nil {
-		t.Fatalf("expected dispatch failure handling to succeed, got %v", err)
+	claimed, err := service.Tick(context.Background())
+	if err != nil {
+		t.Fatalf("expected tick to succeed, got %v", err)
 	}
-	if store.failedExecutionID != "exec-1" || store.failureReason != "dispatch timeout" {
-		t.Fatalf("unexpected failure delegation: execution=%q reason=%q", store.failedExecutionID, store.failureReason)
+	if claimed {
+		t.Fatal("expected standby instance to skip reconciliation")
 	}
 }
 
 type fakeStore struct {
-	execution          jobs.Execution
-	failedExecution    jobs.Execution
-	nextExecution      *jobs.Execution
-	job                jobs.Job
-	ok                 bool
-	claimLeaseDuration time.Duration
-	failedExecutionID  string
-	failureReason      string
+	leader           bool
+	requeued         int
+	enqueued         int
+	leaderInstanceID string
 }
 
-func (s *fakeStore) ClaimNextRunnable(context.Context, time.Duration) (jobs.Execution, jobs.Job, bool, error) {
-	s.claimLeaseDuration = 10 * time.Second
-	return s.execution, s.job, s.ok, nil
+func (s *fakeStore) TryAcquireLeadership(_ context.Context, instanceID string, _ time.Duration) (bool, error) {
+	s.leaderInstanceID = instanceID
+	return s.leader, nil
 }
 
-func (s *fakeStore) MarkExecutionFailed(context.Context, string, string) (jobs.Execution, *jobs.Execution, jobs.Job, error) {
-	s.failedExecutionID = "exec-1"
-	s.failureReason = "dispatch timeout"
-	return s.failedExecution, s.nextExecution, s.job, nil
+func (s *fakeStore) RequeueExpiredExecutions(context.Context, time.Duration, int) (int, error) {
+	return s.requeued, nil
+}
+
+func (s *fakeStore) EnqueueRunnableExecutions(context.Context, int) (int, error) {
+	return s.enqueued, nil
 }
