@@ -18,6 +18,17 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	t.Setenv("WORKER_HEARTBEAT_TTL", "")
 	t.Setenv("READY_QUEUE_PREFIX", "")
 	t.Setenv("SCHEDULER_LEADER_KEY", "")
+	t.Setenv("AUTH_ENABLED", "")
+	t.Setenv("AUTH_JWT_ISSUER", "")
+	t.Setenv("AUTH_JWT_AUDIENCE", "")
+	t.Setenv("AUTH_JWT_SHARED_SECRET", "")
+	t.Setenv("AUTH_JWT_PUBLIC_KEY_PEM", "")
+	t.Setenv("AUDIT_LOG_ENABLED", "")
+	t.Setenv("TLS_ENABLED", "")
+	t.Setenv("TLS_CERT_FILE", "")
+	t.Setenv("TLS_KEY_FILE", "")
+	t.Setenv("TLS_CLIENT_CA_FILE", "")
+	t.Setenv("TLS_REQUIRE_CLIENT_CERT", "")
 
 	got := Load("control-plane")
 
@@ -64,6 +75,26 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	if got.WorkerHeartbeatTTL != 45*time.Second {
 		t.Fatalf("expected default heartbeat ttl 45s, got %s", got.WorkerHeartbeatTTL)
 	}
+
+	if got.AuthEnabled {
+		t.Fatal("expected auth to be disabled by default")
+	}
+
+	if got.AuthJWTIssuer != "task-orchestrator" {
+		t.Fatalf("expected default auth issuer task-orchestrator, got %q", got.AuthJWTIssuer)
+	}
+
+	if got.AuthJWTAudience != "task-orchestrator-clients" {
+		t.Fatalf("expected default auth audience task-orchestrator-clients, got %q", got.AuthJWTAudience)
+	}
+
+	if !got.AuditLogEnabled {
+		t.Fatal("expected audit logging to be enabled by default")
+	}
+
+	if got.TLSEnabled {
+		t.Fatal("expected tls to be disabled by default")
+	}
 }
 
 func TestLoadUsesEnvironmentOverrides(t *testing.T) {
@@ -80,6 +111,17 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("WORKER_HEARTBEAT_TTL", "2m")
 	t.Setenv("READY_QUEUE_PREFIX", "custom:ready")
 	t.Setenv("SCHEDULER_LEADER_KEY", "custom:leader")
+	t.Setenv("AUTH_ENABLED", "true")
+	t.Setenv("AUTH_JWT_ISSUER", "issuer.example")
+	t.Setenv("AUTH_JWT_AUDIENCE", "aud.example")
+	t.Setenv("AUTH_JWT_SHARED_SECRET", "secret-value")
+	t.Setenv("AUTH_JWT_PUBLIC_KEY_PEM", "pem-value")
+	t.Setenv("AUDIT_LOG_ENABLED", "false")
+	t.Setenv("TLS_ENABLED", "true")
+	t.Setenv("TLS_CERT_FILE", "/tls/server.crt")
+	t.Setenv("TLS_KEY_FILE", "/tls/server.key")
+	t.Setenv("TLS_CLIENT_CA_FILE", "/tls/ca.crt")
+	t.Setenv("TLS_REQUIRE_CLIENT_CERT", "true")
 
 	got := Load("scheduler")
 
@@ -133,5 +175,41 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 
 	if got.SchedulerLeaderKey != "custom:leader" {
 		t.Fatalf("expected scheduler leader key custom:leader, got %q", got.SchedulerLeaderKey)
+	}
+
+	if !got.AuthEnabled {
+		t.Fatal("expected auth to be enabled")
+	}
+
+	if got.AuthJWTIssuer != "issuer.example" {
+		t.Fatalf("expected auth issuer issuer.example, got %q", got.AuthJWTIssuer)
+	}
+
+	if got.AuthJWTAudience != "aud.example" {
+		t.Fatalf("expected auth audience aud.example, got %q", got.AuthJWTAudience)
+	}
+
+	if got.AuthJWTSharedSecret != "secret-value" {
+		t.Fatalf("expected auth shared secret override, got %q", got.AuthJWTSharedSecret)
+	}
+
+	if got.AuthJWTPublicKeyPEM != "pem-value" {
+		t.Fatalf("expected auth public key override, got %q", got.AuthJWTPublicKeyPEM)
+	}
+
+	if got.AuditLogEnabled {
+		t.Fatal("expected audit logging override to false")
+	}
+
+	if !got.TLSEnabled {
+		t.Fatal("expected tls to be enabled")
+	}
+
+	if got.TLSCertFile != "/tls/server.crt" || got.TLSKeyFile != "/tls/server.key" || got.TLSClientCAFile != "/tls/ca.crt" {
+		t.Fatalf("unexpected tls file configuration: cert=%q key=%q ca=%q", got.TLSCertFile, got.TLSKeyFile, got.TLSClientCAFile)
+	}
+
+	if !got.TLSRequireClientCert {
+		t.Fatal("expected tls client cert requirement to be enabled")
 	}
 }

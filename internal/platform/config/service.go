@@ -25,6 +25,17 @@ type Service struct {
 	WorkerHeartbeatTTL    time.Duration
 	SchedulerLeaderKey    string
 	ReadyQueuePrefix      string
+	AuthEnabled           bool
+	AuthJWTIssuer         string
+	AuthJWTAudience       string
+	AuthJWTSharedSecret   string
+	AuthJWTPublicKeyPEM   string
+	AuditLogEnabled       bool
+	TLSEnabled            bool
+	TLSCertFile           string
+	TLSKeyFile            string
+	TLSClientCAFile       string
+	TLSRequireClientCert  bool
 }
 
 func Load(serviceName string) Service {
@@ -52,6 +63,17 @@ func Load(serviceName string) Service {
 		WorkerHeartbeatTTL:    getDurationValueEnv("WORKER_HEARTBEAT_TTL", 45*time.Second),
 		SchedulerLeaderKey:    getEnv("SCHEDULER_LEADER_KEY", "task-orchestrator:scheduler:leader"),
 		ReadyQueuePrefix:      getEnv("READY_QUEUE_PREFIX", "task-orchestrator:ready"),
+		AuthEnabled:           getBoolEnv("AUTH_ENABLED", false),
+		AuthJWTIssuer:         getEnv("AUTH_JWT_ISSUER", "task-orchestrator"),
+		AuthJWTAudience:       getEnv("AUTH_JWT_AUDIENCE", "task-orchestrator-clients"),
+		AuthJWTSharedSecret:   os.Getenv("AUTH_JWT_SHARED_SECRET"),
+		AuthJWTPublicKeyPEM:   os.Getenv("AUTH_JWT_PUBLIC_KEY_PEM"),
+		AuditLogEnabled:       getBoolEnv("AUDIT_LOG_ENABLED", true),
+		TLSEnabled:            getBoolEnv("TLS_ENABLED", false),
+		TLSCertFile:           getEnv("TLS_CERT_FILE", "/var/run/task-orchestrator/tls/tls.crt"),
+		TLSKeyFile:            getEnv("TLS_KEY_FILE", "/var/run/task-orchestrator/tls/tls.key"),
+		TLSClientCAFile:       getEnv("TLS_CLIENT_CA_FILE", "/var/run/task-orchestrator/tls/ca.crt"),
+		TLSRequireClientCert:  getBoolEnv("TLS_REQUIRE_CLIENT_CERT", false),
 	}
 }
 
@@ -104,6 +126,20 @@ func getDurationValueEnv(key string, fallback time.Duration) time.Duration {
 
 	value, err := time.ParseDuration(rawValue)
 	if err != nil || value <= 0 {
+		return fallback
+	}
+
+	return value
+}
+
+func getBoolEnv(key string, fallback bool) bool {
+	rawValue := strings.TrimSpace(os.Getenv(key))
+	if rawValue == "" {
+		return fallback
+	}
+
+	value, err := strconv.ParseBool(rawValue)
+	if err != nil {
 		return fallback
 	}
 

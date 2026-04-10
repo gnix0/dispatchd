@@ -7,6 +7,7 @@ import (
 	taskorchestratorv1 "github.com/gnix0/task-orchestrator/gen/go/taskorchestrator/v1"
 	"github.com/gnix0/task-orchestrator/internal/application/jobs"
 	"github.com/gnix0/task-orchestrator/internal/application/workers"
+	"github.com/gnix0/task-orchestrator/internal/platform/security"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -46,6 +47,9 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 
 		switch payload := request.GetPayload().(type) {
 		case *taskorchestratorv1.ConnectRequest_Registration:
+			if err := security.ValidateWorkerIdentity(stream.Context(), payload.Registration.GetWorkerId()); err != nil {
+				return err
+			}
 			worker, err := s.workerApplication.Register(stream.Context(), workers.RegisterInput{
 				WorkerID:       payload.Registration.GetWorkerId(),
 				Capabilities:   payload.Registration.GetCapabilities(),
@@ -67,6 +71,9 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 			workerID := payload.Heartbeat.GetWorkerId()
 			if workerID == "" {
 				workerID = streamWorkerID
+			}
+			if err := security.ValidateWorkerIdentity(stream.Context(), workerID); err != nil {
+				return err
 			}
 
 			worker, err := s.workerApplication.Heartbeat(stream.Context(), workers.HeartbeatInput{
@@ -93,6 +100,9 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 			if workerID == "" {
 				workerID = payload.Result.GetMetadata()["worker_id"]
 			}
+			if err := security.ValidateWorkerIdentity(stream.Context(), workerID); err != nil {
+				return err
+			}
 
 			if payload.Result.GetSuccess() {
 				if _, _, err := s.dispatchService.CompleteExecution(stream.Context(), jobs.CompleteExecutionInput{
@@ -116,6 +126,9 @@ func (s *WorkerService) Connect(stream taskorchestratorv1.WorkerService_ConnectS
 				return err
 			}
 		case *taskorchestratorv1.ConnectRequest_LogChunk:
+			if err := security.ValidateWorkerIdentity(stream.Context(), streamWorkerID); err != nil {
+				return err
+			}
 			if err := stream.Send(newExecutionAck(payload.LogChunk.GetExecutionId(), streamWorkerID, "log accepted")); err != nil {
 				return err
 			}

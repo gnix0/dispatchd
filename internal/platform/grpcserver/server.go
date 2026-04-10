@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gnix0/task-orchestrator/internal/platform/config"
+	"github.com/gnix0/task-orchestrator/internal/platform/security"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -22,7 +23,12 @@ func Run(ctx context.Context, logger *slog.Logger, serviceConfig config.Service,
 		return err
 	}
 
-	server := grpc.NewServer()
+	serverOptions, err := security.BuildServerOptions(logger, serviceConfig)
+	if err != nil {
+		return err
+	}
+
+	server := grpc.NewServer(serverOptions...)
 	healthServer := health.NewServer()
 
 	healthpb.RegisterHealthServer(server, healthServer)
