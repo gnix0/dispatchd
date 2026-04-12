@@ -7,15 +7,36 @@ resources:
   - ../../base
   - namespace.yaml
   - pdb.yaml
+  - certificates.yaml
 
 patches:
+  - path: security-config-patch.yaml
+    target:
+      kind: ConfigMap
+      name: dispatchd-config
+  - path: security-secret-patch.yaml
+    target:
+      kind: Secret
+      name: dispatchd-secrets
+  - path: tls-secret-delete.yaml
+    target:
+      kind: Secret
+      name: dispatchd-tls
   - path: control-plane-service-patch.yaml
     target:
       kind: Service
       name: control-plane
+  - path: control-plane-security-patch.yaml
+    target:
+      kind: Deployment
+      name: control-plane
   - path: worker-gateway-service-patch.yaml
     target:
       kind: Service
+      name: worker-gateway
+  - path: worker-gateway-security-patch.yaml
+    target:
+      kind: Deployment
       name: worker-gateway
 
 images:

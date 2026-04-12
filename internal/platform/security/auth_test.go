@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/gnix0/dispatchd/internal/platform/config"
@@ -90,6 +91,40 @@ func TestIsAuthorizedUsesMethodPolicies(t *testing.T) {
 	}
 	if isAuthorized("/dispatchd.v1.JobService/CancelJob", principal) {
 		t.Fatal("expected submitter/viewer to be denied cancel")
+	}
+}
+
+func TestAuthenticatorLoadsSharedSecretFromFile(t *testing.T) {
+	secretFile, err := os.CreateTemp(t.TempDir(), "jwt-secret-*")
+	if err != nil {
+		t.Fatalf("create temp secret file: %v", err)
+	}
+	if _, err := secretFile.WriteString("super-secret\n"); err != nil {
+		t.Fatalf("write temp secret file: %v", err)
+	}
+	if err := secretFile.Close(); err != nil {
+		t.Fatalf("close temp secret file: %v", err)
+	}
+
+	authenticator, err := NewAuthenticator(config.Service{
+		AuthEnabled:             true,
+		AuthJWTIssuer:           "dispatchd",
+		AuthJWTAudience:         "dispatchd-clients",
+		AuthJWTSharedSecretFile: secretFile.Name(),
+	})
+	if err != nil {
+		t.Fatalf("expected authenticator to build from file, got %v", err)
+	}
+
+	tokenString := signToken(t, jwt.MapClaims{
+		"sub": "user-1",
+		"iss": "dispatchd",
+		"aud": []string{"dispatchd-clients"},
+	}, "super-secret")
+
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer "+tokenString))
+	if _, _, err := authenticator.Authenticate(ctx); err != nil {
+		t.Fatalf("expected token signed with file secret to authenticate, got %v", err)
 	}
 }
 

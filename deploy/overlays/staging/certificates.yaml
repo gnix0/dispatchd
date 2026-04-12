@@ -1,0 +1,48 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: dispatchd-selfsigned
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dispatchd-root-ca
+spec:
+  isCA: true
+  commonName: dispatchd-root-ca
+  secretName: dispatchd-root-ca
+  issuerRef:
+    kind: Issuer
+    name: dispatchd-selfsigned
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: dispatchd-ca
+spec:
+  ca:
+    secretName: dispatchd-root-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dispatchd-tls
+spec:
+  secretName: dispatchd-tls
+  duration: 2160h
+  renewBefore: 360h
+  issuerRef:
+    kind: Issuer
+    name: dispatchd-ca
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - control-plane
+    - control-plane.dispatchd-staging.svc
+    - control-plane.dispatchd-staging.svc.cluster.local
+    - worker-gateway
+    - worker-gateway.dispatchd-staging.svc
+    - worker-gateway.dispatchd-staging.svc.cluster.local

@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gnix0/dispatchd/internal/platform/config"
@@ -48,9 +49,29 @@ func NewAuthenticator(cfg config.Service) (*Authenticator, error) {
 		authenticator.sharedSecret = []byte(cfg.AuthJWTSharedSecret)
 		return authenticator, nil
 	}
+	if cfg.AuthJWTSharedSecretFile != "" {
+		sharedSecret, err := readSecretFile(cfg.AuthJWTSharedSecretFile)
+		if err != nil {
+			return nil, err
+		}
+		authenticator.sharedSecret = []byte(sharedSecret)
+		return authenticator, nil
+	}
 
 	if strings.TrimSpace(cfg.AuthJWTPublicKeyPEM) != "" {
 		publicKey, err := parseRSAPublicKey(cfg.AuthJWTPublicKeyPEM)
+		if err != nil {
+			return nil, err
+		}
+		authenticator.publicKey = publicKey
+		return authenticator, nil
+	}
+	if strings.TrimSpace(cfg.AuthJWTPublicKeyPEMFile) != "" {
+		publicKeyPEM, err := readSecretFile(cfg.AuthJWTPublicKeyPEMFile)
+		if err != nil {
+			return nil, err
+		}
+		publicKey, err := parseRSAPublicKey(publicKeyPEM)
 		if err != nil {
 			return nil, err
 		}
@@ -292,4 +313,18 @@ func stringSliceAny(value any) []string {
 	default:
 		return nil
 	}
+}
+
+func readSecretFile(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read secret file %s: %w", path, err)
+	}
+
+	value := strings.TrimSpace(string(content))
+	if value == "" {
+		return "", fmt.Errorf("secret file %s is empty", path)
+	}
+
+	return value, nil
 }

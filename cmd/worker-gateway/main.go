@@ -16,6 +16,10 @@ import (
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	serviceConfig := config.Load("worker-gateway")
+	if err := serviceConfig.Validate(); err != nil {
+		logger.Error("invalid service configuration", slog.Any("error", err))
+		os.Exit(1)
+	}
 
 	runtimeapp.LogBootstrap(logger, serviceConfig)
 
