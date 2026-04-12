@@ -4,6 +4,21 @@ metadata:
   name: worker-gateway
 spec:
   template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker-gateway
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
     metadata:
       annotations:
         vault.hashicorp.com/role: dispatchd-prod-region-a
