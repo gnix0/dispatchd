@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dispatchd-config
+data:
+  APP_ENV: staging
+  AUTH_ENABLED: "true"
+  AUTH_JWT_ISSUER: dispatchd
+  AUTH_JWT_AUDIENCE: dispatchd-clients
+  AUTH_JWT_PUBLIC_KEY_PEM_FILE: /vault/secrets/jwt-public-key.pem
+  AUDIT_LOG_ENABLED: "true"
+  TLS_ENABLED: "true"
+  TLS_REQUIRE_CLIENT_CERT: "true"

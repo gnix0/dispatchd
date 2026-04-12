@@ -14,6 +14,7 @@ data:
   AUTH_ENABLED: "false"
   AUTH_JWT_ISSUER: dispatchd
   AUTH_JWT_AUDIENCE: dispatchd-clients
+  AUTH_JWT_PUBLIC_KEY_PEM_FILE: ""
   AUDIT_LOG_ENABLED: "true"
   TLS_ENABLED: "false"
   TLS_REQUIRE_CLIENT_CERT: "false"

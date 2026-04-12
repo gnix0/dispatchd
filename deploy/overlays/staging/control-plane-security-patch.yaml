@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control-plane
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: control-plane
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        vault.hashicorp.com/auth-path: auth/kubernetes
+        vault.hashicorp.com/role: dispatchd-staging
+        vault.hashicorp.com/agent-inject-secret-jwt-public-key.pem: secret/data/dispatchd/staging/auth
+        vault.hashicorp.com/agent-inject-template-jwt-public-key.pem: |
+          {{- with secret "secret/data/dispatchd/staging/auth" -}}
+          {{ .Data.data.jwt_public_key_pem }}
+          {{- end -}}

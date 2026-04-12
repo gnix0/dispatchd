@@ -23,7 +23,9 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	t.Setenv("AUTH_JWT_ISSUER", "")
 	t.Setenv("AUTH_JWT_AUDIENCE", "")
 	t.Setenv("AUTH_JWT_SHARED_SECRET", "")
+	t.Setenv("AUTH_JWT_SHARED_SECRET_FILE", "")
 	t.Setenv("AUTH_JWT_PUBLIC_KEY_PEM", "")
+	t.Setenv("AUTH_JWT_PUBLIC_KEY_PEM_FILE", "")
 	t.Setenv("AUDIT_LOG_ENABLED", "")
 	t.Setenv("TLS_ENABLED", "")
 	t.Setenv("TLS_CERT_FILE", "")
@@ -141,7 +143,9 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("AUTH_JWT_ISSUER", "issuer.example")
 	t.Setenv("AUTH_JWT_AUDIENCE", "aud.example")
 	t.Setenv("AUTH_JWT_SHARED_SECRET", "secret-value")
+	t.Setenv("AUTH_JWT_SHARED_SECRET_FILE", "/vault/secrets/jwt-shared-secret")
 	t.Setenv("AUTH_JWT_PUBLIC_KEY_PEM", "pem-value")
+	t.Setenv("AUTH_JWT_PUBLIC_KEY_PEM_FILE", "/vault/secrets/jwt-public-key.pem")
 	t.Setenv("AUDIT_LOG_ENABLED", "false")
 	t.Setenv("TLS_ENABLED", "true")
 	t.Setenv("TLS_CERT_FILE", "/tls/server.crt")
@@ -227,8 +231,16 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 		t.Fatalf("expected auth shared secret override, got %q", got.AuthJWTSharedSecret)
 	}
 
+	if got.AuthJWTSharedSecretFile != "/vault/secrets/jwt-shared-secret" {
+		t.Fatalf("expected auth shared secret file override, got %q", got.AuthJWTSharedSecretFile)
+	}
+
 	if got.AuthJWTPublicKeyPEM != "pem-value" {
 		t.Fatalf("expected auth public key override, got %q", got.AuthJWTPublicKeyPEM)
+	}
+
+	if got.AuthJWTPublicKeyPEMFile != "/vault/secrets/jwt-public-key.pem" {
+		t.Fatalf("expected auth public key file override, got %q", got.AuthJWTPublicKeyPEMFile)
 	}
 
 	if got.AuditLogEnabled {
@@ -261,5 +273,54 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 
 	if got.TraceSampleRate != 0.25 {
 		t.Fatalf("expected trace sample rate 0.25, got %f", got.TraceSampleRate)
+	}
+}
+
+func TestValidateRequiresSecurityControlsOutsideDevelopment(t *testing.T) {
+	service := Service{
+		Name:            "control-plane",
+		Environment:     "staging",
+		AuthEnabled:     false,
+		TLSEnabled:      false,
+		AuditLogEnabled: true,
+	}
+
+	if err := service.Validate(); err == nil {
+		t.Fatal("expected staging service validation to require auth and tls")
+	}
+}
+
+func TestValidateAllowsDevelopmentDefaults(t *testing.T) {
+	service := Service{
+		Name:            "control-plane",
+		Environment:     "development",
+		AuthEnabled:     false,
+		TLSEnabled:      false,
+		AuditLogEnabled: true,
+	}
+
+	if err := service.Validate(); err != nil {
+		t.Fatalf("expected development config to validate, got %v", err)
+	}
+}
+
+func TestValidateAllowsSchedulerWithNonDevSecurityControls(t *testing.T) {
+	service := Service{
+		Name:                    "scheduler",
+		Environment:             "production",
+		AuthEnabled:             true,
+		AuthJWTIssuer:           "dispatchd",
+		AuthJWTAudience:         "dispatchd-clients",
+		AuthJWTPublicKeyPEMFile: "/vault/secrets/jwt-public-key.pem",
+		TLSEnabled:              true,
+		TLSCertFile:             "/tls/server.crt",
+		TLSKeyFile:              "/tls/server.key",
+		TLSClientCAFile:         "/tls/ca.crt",
+		TLSRequireClientCert:    true,
+		AuditLogEnabled:         true,
+	}
+
+	if err := service.Validate(); err != nil {
+		t.Fatalf("expected scheduler production config to validate, got %v", err)
 	}
 }
