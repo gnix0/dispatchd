@@ -35,6 +35,7 @@ var (
 	ErrJobNotFound         = errors.New("job not found")
 	ErrExecutionNotFound   = errors.New("execution not found")
 	ErrIdempotencyConflict = errors.New("idempotency key already used with different request")
+	ErrMutationsDisabled   = errors.New("mutations are disabled in this region")
 )
 
 type Status string

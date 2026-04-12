@@ -14,7 +14,7 @@ func TestTickClaimsRunnableExecution(t *testing.T) {
 		requeued: 1,
 		enqueued: 2,
 	}
-	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-a", time.Second, 10*time.Second, 45*time.Second)
+	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-a", "region-a", "region-a", true, time.Second, 10*time.Second, 45*time.Second)
 
 	claimed, err := service.Tick(context.Background())
 	if err != nil {
@@ -26,11 +26,14 @@ func TestTickClaimsRunnableExecution(t *testing.T) {
 	if store.leaderInstanceID != "scheduler-a" {
 		t.Fatalf("expected leader instance id scheduler-a, got %q", store.leaderInstanceID)
 	}
+	if store.leaderTTL != 10*time.Second {
+		t.Fatalf("expected leader ttl 10s, got %s", store.leaderTTL)
+	}
 }
 
 func TestTickReturnsFalseForStandbyInstance(t *testing.T) {
 	store := &fakeStore{leader: false}
-	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-b", time.Second, 10*time.Second, 45*time.Second)
+	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-b", "region-a", "region-a", true, time.Second, 10*time.Second, 45*time.Second)
 
 	claimed, err := service.Tick(context.Background())
 	if err != nil {
@@ -41,15 +44,33 @@ func TestTickReturnsFalseForStandbyInstance(t *testing.T) {
 	}
 }
 
+func TestTickReturnsFalseForPassiveRegion(t *testing.T) {
+	store := &fakeStore{leader: true}
+	service := NewService(slog.New(slog.NewTextHandler(io.Discard, nil)), store, "scheduler-b", "region-b", "region-a", false, time.Second, 10*time.Second, 45*time.Second)
+
+	claimed, err := service.Tick(context.Background())
+	if err != nil {
+		t.Fatalf("expected passive region tick to succeed, got %v", err)
+	}
+	if claimed {
+		t.Fatal("expected passive region to skip reconciliation")
+	}
+	if store.leaderInstanceID != "" {
+		t.Fatalf("expected passive region to skip leadership acquisition, got %q", store.leaderInstanceID)
+	}
+}
+
 type fakeStore struct {
 	leader           bool
 	requeued         int
 	enqueued         int
 	leaderInstanceID string
+	leaderTTL        time.Duration
 }
 
-func (s *fakeStore) TryAcquireLeadership(_ context.Context, instanceID string, _ time.Duration) (bool, error) {
+func (s *fakeStore) TryAcquireLeadership(_ context.Context, instanceID string, ttl time.Duration) (bool, error) {
 	s.leaderInstanceID = instanceID
+	s.leaderTTL = ttl
 	return s.leader, nil
 }
 

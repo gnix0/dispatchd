@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/gnix0/dispatchd/internal/application/jobs"
 	"github.com/gnix0/dispatchd/internal/platform/config"
 	"github.com/gnix0/dispatchd/internal/platform/grpcserver"
 	"github.com/gnix0/dispatchd/internal/platform/observability"
@@ -46,7 +47,9 @@ func main() {
 	}
 	defer sharedStore.Close()
 
-	if err := grpcserver.Run(ctx, logger, serviceConfig, grpcapi.RegisterControlPlane(sharedStore)); err != nil {
+	jobService := jobs.NewRegionalService(sharedStore, serviceConfig.Region, serviceConfig.PrimaryRegion, serviceConfig.AllowMutations)
+
+	if err := grpcserver.Run(ctx, logger, serviceConfig, grpcapi.RegisterControlPlane(jobService)); err != nil {
 		logger.Error("control-plane exited with error", slog.Any("error", err))
 		os.Exit(1)
 	}

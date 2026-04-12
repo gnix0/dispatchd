@@ -4,6 +4,9 @@ metadata:
   name: dispatchd-config
 data:
   APP_ENV: staging
+  REGION: staging
+  PRIMARY_REGION: staging
+  ALLOW_MUTATIONS: "true"
   AUTH_ENABLED: "true"
   AUTH_JWT_ISSUER: dispatchd
   AUTH_JWT_AUDIENCE: dispatchd-clients

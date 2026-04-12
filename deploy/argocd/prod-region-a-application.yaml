@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dispatchd-prod-region-a
+  namespace: argocd
+spec:
+  project: dispatchd
+  source:
+    repoURL: https://github.com/gnix0/dispatchd.git
+    targetRevision: main
+    path: deploy/overlays/prod-region-a
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dispatchd-prod-region-a
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

@@ -11,15 +11,18 @@ import (
 )
 
 type Service struct {
-	logger        *slog.Logger
-	store         jobs.SchedulerStore
-	instanceID    string
-	pollInterval  time.Duration
-	leaseDuration time.Duration
-	workerTTL     time.Duration
+	logger         *slog.Logger
+	store          jobs.SchedulerStore
+	instanceID     string
+	region         string
+	primaryRegion  string
+	allowMutations bool
+	pollInterval   time.Duration
+	leaseDuration  time.Duration
+	workerTTL      time.Duration
 }
 
-func NewService(logger *slog.Logger, store jobs.SchedulerStore, instanceID string, pollInterval, leaseDuration, workerTTL time.Duration) *Service {
+func NewService(logger *slog.Logger, store jobs.SchedulerStore, instanceID, region, primaryRegion string, allowMutations bool, pollInterval, leaseDuration, workerTTL time.Duration) *Service {
 	if pollInterval <= 0 {
 		pollInterval = 2 * time.Second
 	}
@@ -31,12 +34,15 @@ func NewService(logger *slog.Logger, store jobs.SchedulerStore, instanceID strin
 	}
 
 	return &Service{
-		logger:        logger,
-		store:         store,
-		instanceID:    instanceID,
-		pollInterval:  pollInterval,
-		leaseDuration: leaseDuration,
-		workerTTL:     workerTTL,
+		logger:         logger,
+		store:          store,
+		instanceID:     instanceID,
+		region:         region,
+		primaryRegion:  primaryRegion,
+		allowMutations: allowMutations,
+		pollInterval:   pollInterval,
+		leaseDuration:  leaseDuration,
+		workerTTL:      workerTTL,
 	}
 }
 
@@ -73,7 +79,16 @@ func (s *Service) Tick(ctx context.Context) (isLeader bool, err error) {
 		observability.RecordSchedulerTick(time.Since(started), isLeader, requeued, enqueued, err)
 	}()
 
-	isLeader, err = s.store.TryAcquireLeadership(ctx, s.instanceID, s.pollInterval*3)
+	if !s.allowMutations {
+		s.logger.Debug(
+			"scheduler tick skipped because region is passive",
+			slog.String("region", s.region),
+			slog.String("primary_region", s.primaryRegion),
+		)
+		return false, nil
+	}
+
+	isLeader, err = s.store.TryAcquireLeadership(ctx, s.instanceID, s.leaseDuration)
 	if err != nil {
 		return false, err
 	}

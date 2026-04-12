@@ -264,7 +264,7 @@ func (s *Store) TryAcquireLeadership(ctx context.Context, instanceID string, ttl
 		ttl = 10 * time.Second
 	}
 
-	status := s.redis.SetArgs(ctx, s.cfg.SchedulerLeaderKey, instanceID, redis.SetArgs{
+	status := s.redis.SetArgs(ctx, s.cfg.RegionSchedulerLeaderKey(), instanceID, redis.SetArgs{
 		TTL:  ttl,
 		Mode: "NX",
 	})
@@ -279,7 +279,7 @@ func (s *Store) TryAcquireLeadership(ctx context.Context, instanceID string, ttl
 		return true, nil
 	}
 
-	currentOwner, err := s.redis.Get(ctx, s.cfg.SchedulerLeaderKey).Result()
+	currentOwner, err := s.redis.Get(ctx, s.cfg.RegionSchedulerLeaderKey()).Result()
 	if err == redis.Nil {
 		return false, nil
 	}
@@ -291,7 +291,7 @@ func (s *Store) TryAcquireLeadership(ctx context.Context, instanceID string, ttl
 		return false, nil
 	}
 
-	if err := s.redis.Expire(ctx, s.cfg.SchedulerLeaderKey, ttl).Err(); err != nil {
+	if err := s.redis.Expire(ctx, s.cfg.RegionSchedulerLeaderKey(), ttl).Err(); err != nil {
 		return false, fmt.Errorf("renew leader lock: %w", err)
 	}
 
@@ -1026,7 +1026,7 @@ func (s *Store) readyQueueKey(jobType string) string {
 }
 
 func (s *Store) capabilityQueueKey(capability string) string {
-	return fmt.Sprintf("%s:%s", s.cfg.ReadyQueuePrefix, jobNamespace(capability))
+	return fmt.Sprintf("%s:%s", s.cfg.RegionReadyQueuePrefix(), jobNamespace(capability))
 }
 
 func normalizeSubmitInput(input jobs.SubmitJobInput) (jobs.SubmitJobInput, error) {

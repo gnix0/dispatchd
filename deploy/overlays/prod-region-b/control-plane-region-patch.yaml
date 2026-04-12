@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control-plane
+spec:
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/role: dispatchd-prod-region-b
+        vault.hashicorp.com/agent-inject-secret-jwt-public-key.pem: secret/data/dispatchd/prod-region-b/auth
+        vault.hashicorp.com/agent-inject-template-jwt-public-key.pem: |
+          {{- with secret "secret/data/dispatchd/prod-region-b/auth" -}}
+          {{ .Data.data.jwt_public_key_pem }}
+          {{- end -}}
