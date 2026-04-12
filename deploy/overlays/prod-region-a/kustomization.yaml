@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dispatchd-prod-region-a
+
+resources:
+  - ../prod
+
+patches:
+  - path: namespace-patch.yaml
+    target:
+      kind: Namespace
+      name: dispatchd-prod
+  - path: region-config-patch.yaml
+    target:
+      kind: ConfigMap
+      name: dispatchd-config
+  - path: certificate-patch.yaml
+    target:
+      kind: Certificate
+      name: dispatchd-tls
+  - path: control-plane-region-patch.yaml
+    target:
+      kind: Deployment
+      name: control-plane
+  - path: worker-gateway-region-patch.yaml
+    target:
+      kind: Deployment
+      name: worker-gateway

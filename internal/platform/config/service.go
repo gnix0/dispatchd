@@ -13,6 +13,9 @@ const defaultShutdownTimeout = 10 * time.Second
 type Service struct {
 	Name                    string
 	Environment             string
+	Region                  string
+	PrimaryRegion           string
+	AllowMutations          bool
 	LogLevel                string
 	GRPCPort                int
 	MetricsPort             int
@@ -55,9 +58,15 @@ func Load(serviceName string) Service {
 		instanceID = serviceName
 	}
 
+	region := normalizeRegion(getEnv("REGION", "local"))
+	primaryRegion := normalizeRegion(getEnv("PRIMARY_REGION", region))
+
 	return Service{
 		Name:                    serviceName,
 		Environment:             getEnv("APP_ENV", "development"),
+		Region:                  region,
+		PrimaryRegion:           primaryRegion,
+		AllowMutations:          getBoolEnv("ALLOW_MUTATIONS", strings.EqualFold(region, primaryRegion)),
 		LogLevel:                getEnv("LOG_LEVEL", "info"),
 		GRPCPort:                getIntEnv("GRPC_PORT", 8080),
 		MetricsPort:             getIntEnv("METRICS_PORT", defaultMetricsPort(serviceName)),
@@ -156,6 +165,18 @@ func (s Service) MetricsAddress() string {
 	return ":" + strconv.Itoa(s.MetricsPort)
 }
 
+func (s Service) RegionSchedulerLeaderKey() string {
+	return scopeRegionKey(s.SchedulerLeaderKey, s.Region)
+}
+
+func (s Service) RegionReadyQueuePrefix() string {
+	return scopeRegionKey(s.ReadyQueuePrefix, s.Region)
+}
+
+func (s Service) IsPrimaryRegion() bool {
+	return strings.EqualFold(normalizeRegion(s.Region), normalizeRegion(s.PrimaryRegion))
+}
+
 func defaultMetricsPort(serviceName string) int {
 	switch strings.TrimSpace(serviceName) {
 	case "control-plane":
@@ -246,6 +267,22 @@ func getFloatEnv(key string, fallback float64) float64 {
 	}
 
 	return value
+}
+
+func normalizeRegion(value string) string {
+	trimmed := strings.ToLower(strings.TrimSpace(value))
+	if trimmed == "" {
+		return "local"
+	}
+	return trimmed
+}
+
+func scopeRegionKey(base, region string) string {
+	trimmedBase := strings.TrimSpace(base)
+	if trimmedBase == "" {
+		return normalizeRegion(region)
+	}
+	return trimmedBase + ":" + normalizeRegion(region)
 }
 
 func (s Service) enforcesNonDevSecurity() bool {

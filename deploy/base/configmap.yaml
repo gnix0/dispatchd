@@ -4,6 +4,9 @@ metadata:
   name: dispatchd-config
 data:
   APP_ENV: kubernetes
+  REGION: local
+  PRIMARY_REGION: local
+  ALLOW_MUTATIONS: "true"
   LOG_LEVEL: info
   SHUTDOWN_TIMEOUT_SECONDS: "10"
   REDIS_ADDRESS: redis:6379

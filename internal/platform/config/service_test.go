@@ -7,6 +7,9 @@ import (
 
 func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 	t.Setenv("APP_ENV", "")
+	t.Setenv("REGION", "")
+	t.Setenv("PRIMARY_REGION", "")
+	t.Setenv("ALLOW_MUTATIONS", "")
 	t.Setenv("LOG_LEVEL", "")
 	t.Setenv("METRICS_PORT", "")
 	t.Setenv("SHUTDOWN_TIMEOUT_SECONDS", "")
@@ -45,6 +48,18 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 
 	if got.Environment != "development" {
 		t.Fatalf("expected default environment development, got %q", got.Environment)
+	}
+
+	if got.Region != "local" {
+		t.Fatalf("expected default region local, got %q", got.Region)
+	}
+
+	if got.PrimaryRegion != "local" {
+		t.Fatalf("expected default primary region local, got %q", got.PrimaryRegion)
+	}
+
+	if !got.AllowMutations {
+		t.Fatal("expected local region to allow mutations by default")
 	}
 
 	if got.LogLevel != "info" {
@@ -126,6 +141,9 @@ func TestLoadUsesDefaultsWhenEnvVarsAreUnset(t *testing.T) {
 
 func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("APP_ENV", "production")
+	t.Setenv("REGION", "region-b")
+	t.Setenv("PRIMARY_REGION", "region-a")
+	t.Setenv("ALLOW_MUTATIONS", "false")
 	t.Setenv("LOG_LEVEL", "debug")
 	t.Setenv("GRPC_PORT", "9090")
 	t.Setenv("METRICS_PORT", "9191")
@@ -161,6 +179,18 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 
 	if got.Environment != "production" {
 		t.Fatalf("expected environment production, got %q", got.Environment)
+	}
+
+	if got.Region != "region-b" {
+		t.Fatalf("expected region region-b, got %q", got.Region)
+	}
+
+	if got.PrimaryRegion != "region-a" {
+		t.Fatalf("expected primary region region-a, got %q", got.PrimaryRegion)
+	}
+
+	if got.AllowMutations {
+		t.Fatal("expected mutations to be disabled by override")
 	}
 
 	if got.LogLevel != "debug" {

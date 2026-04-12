@@ -17,6 +17,8 @@ func toStatusError(err error) error {
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, jobs.ErrIdempotencyConflict):
 		return status.Error(codes.AlreadyExists, err.Error())
+	case errors.Is(err, jobs.ErrMutationsDisabled):
+		return status.Error(codes.FailedPrecondition, err.Error())
 	case errors.Is(err, workers.ErrInvalidArgument):
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Is(err, workers.ErrWorkerNotFound):

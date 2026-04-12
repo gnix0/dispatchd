@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dispatchd-config
+data:
+  REGION: region-a
+  PRIMARY_REGION: region-a
+  ALLOW_MUTATIONS: "true"

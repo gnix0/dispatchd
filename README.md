@@ -145,15 +145,16 @@ If you fork or rename the repository, update the Argo CD `repoURL` fields to mat
 
 ## High Availability And DR
 
-The repository now carries the first HA/DR-oriented operational assets:
+The repository now carries HA/DR-oriented operational assets:
 
-- scheduler leadership is coordinated through Redis so only one active scheduler instance reconciles work per environment
+- scheduler leadership is coordinated through Redis so only one active scheduler instance reconciles work per region
 - staging and production Kustomize overlays separate promotion targets from development
+- production region overlays model active/passive control-plane and scheduler ownership through [prod-region-a](/home/gnix0/developer/dispatchd/deploy/overlays/prod-region-a) and [prod-region-b](/home/gnix0/developer/dispatchd/deploy/overlays/prod-region-b)
 - production PodDisruptionBudgets keep the core services available during voluntary disruptions
 - Postgres backup and restore helpers live in [backup-postgres.sh](/home/gnix0/developer/dispatchd/scripts/backup-postgres.sh) and [restore-postgres.sh](/home/gnix0/developer/dispatchd/scripts/restore-postgres.sh)
 - a scheduler restart drill lives in [failover-smoke.sh](/home/gnix0/developer/dispatchd/scripts/failover-smoke.sh)
 
-This repository models single-region active leadership today. The config boundaries and overlays are structured so failover and environment promotion can be exercised explicitly rather than hidden in manual operator steps.
+The region model is active/passive: only the primary region allows mutable orchestration work, while the passive region stays read-only until promoted.
 
 ## Performance & Reliability
 

@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dispatchd-tls
+spec:
+  dnsNames:
+    - control-plane
+    - control-plane.dispatchd-prod-region-b.svc
+    - control-plane.dispatchd-prod-region-b.svc.cluster.local
+    - worker-gateway
+    - worker-gateway.dispatchd-prod-region-b.svc
+    - worker-gateway.dispatchd-prod-region-b.svc.cluster.local

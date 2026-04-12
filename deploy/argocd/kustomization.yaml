@@ -4,3 +4,5 @@ kind: Kustomization
 resources:
   - project.yaml
   - dev-application.yaml
+  - prod-region-a-application.yaml
+  - prod-region-b-application.yaml
