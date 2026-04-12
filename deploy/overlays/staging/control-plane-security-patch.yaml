@@ -4,6 +4,21 @@ metadata:
   name: control-plane
 spec:
   template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: control-plane
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
     metadata:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
