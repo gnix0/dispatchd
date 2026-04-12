@@ -1102,7 +1102,7 @@ func normalizeHeartbeatInput(input workers.HeartbeatInput) (workers.HeartbeatInp
 		return workers.HeartbeatInput{}, fmt.Errorf("%w: inflight_executions must be greater than or equal to zero", workers.ErrInvalidArgument)
 	}
 	if input.Status == "" {
-		input.Status = workers.StatusUnspecified
+		input.Status = workers.StatusReady
 	}
 	return input, nil
 }
