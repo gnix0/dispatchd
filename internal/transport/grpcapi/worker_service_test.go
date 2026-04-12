@@ -73,6 +73,50 @@ func TestConnectRegistersWorkerAndAcceptsHeartbeat(t *testing.T) {
 	}
 }
 
+func TestConnectHeartbeatDefaultsToReadyWhenStatusIsOmitted(t *testing.T) {
+	workerApplication := workers.NewInMemoryService()
+	service := &WorkerService{
+		workerApplication: workerApplication,
+		dispatchService:   &fakeDispatchService{},
+		leaseDuration:     30 * time.Second,
+	}
+	stream := &fakeWorkerConnectStream{
+		ctx: context.Background(),
+		recvMessages: []*dispatchdv1.ConnectRequest{
+			{
+				Payload: &dispatchdv1.ConnectRequest_Registration{
+					Registration: &dispatchdv1.WorkerRegistration{
+						WorkerId:       "worker-1",
+						Capabilities:   []string{"email"},
+						MaxConcurrency: 4,
+					},
+				},
+			},
+			{
+				Payload: &dispatchdv1.ConnectRequest_Heartbeat{
+					Heartbeat: &dispatchdv1.WorkerHeartbeat{
+						InflightExecutions: 0,
+					},
+				},
+			},
+		},
+	}
+
+	err := service.Connect(stream)
+	if err != nil {
+		t.Fatalf("expected connect to succeed, got %v", err)
+	}
+
+	worker, ok := workerApplication.GetWorker("worker-1")
+	if !ok {
+		t.Fatal("expected worker to be stored in memory")
+	}
+
+	if worker.Status != workers.StatusReady {
+		t.Fatalf("expected omitted heartbeat status to default to ready, got %q", worker.Status)
+	}
+}
+
 func TestConnectRejectsMissingPayload(t *testing.T) {
 	service := &WorkerService{
 		workerApplication: workers.NewInMemoryService(),
@@ -117,12 +161,53 @@ func TestConnectAcceptsTaskResult(t *testing.T) {
 	}
 }
 
+func TestConnectReleasesAssignmentWhenDeliveryFails(t *testing.T) {
+	dispatcher := &fakeDispatchService{
+		assignment: &jobs.Assignment{
+			ExecutionID: "exec-assign-1",
+			JobType:     "email.send",
+			Payload:     []byte("payload"),
+			Attempt:     1,
+		},
+	}
+	service := &WorkerService{
+		workerApplication: workers.NewInMemoryService(),
+		dispatchService:   dispatcher,
+		leaseDuration:     30 * time.Second,
+	}
+	stream := &fakeWorkerConnectStream{
+		ctx: context.Background(),
+		recvMessages: []*dispatchdv1.ConnectRequest{
+			{
+				Payload: &dispatchdv1.ConnectRequest_Registration{
+					Registration: &dispatchdv1.WorkerRegistration{
+						WorkerId:       "worker-1",
+						Capabilities:   []string{"email"},
+						MaxConcurrency: 1,
+					},
+				},
+			},
+		},
+		failSendAt: 2,
+	}
+
+	err := service.Connect(stream)
+	if err == nil {
+		t.Fatal("expected assignment delivery to fail")
+	}
+	if dispatcher.releasedExecutionID != "exec-assign-1" {
+		t.Fatalf("expected released execution exec-assign-1, got %q", dispatcher.releasedExecutionID)
+	}
+}
+
 type fakeDispatchService struct {
 	completedExecutionID string
+	releasedExecutionID  string
+	assignment           *jobs.Assignment
 }
 
 func (f *fakeDispatchService) ClaimNextForWorker(context.Context, jobs.ClaimForWorkerInput, time.Duration) (*jobs.Assignment, error) {
-	return nil, nil
+	return f.assignment, nil
 }
 
 func (f *fakeDispatchService) RenewLeasesForWorker(context.Context, string, time.Duration) error {
@@ -138,7 +223,8 @@ func (f *fakeDispatchService) FailExecution(_ context.Context, input jobs.FailEx
 	return jobs.Execution{ID: input.ExecutionID, Status: jobs.ExecutionStatusFailed}, nil, jobs.Job{ID: "job-1", Status: jobs.StatusFailed}, nil
 }
 
-func (f *fakeDispatchService) ReleaseExecution(context.Context, string, string) error {
+func (f *fakeDispatchService) ReleaseExecution(_ context.Context, executionID, _ string) error {
+	f.releasedExecutionID = executionID
 	return nil
 }
 
@@ -148,6 +234,7 @@ type fakeWorkerConnectStream struct {
 	recvMessages []*dispatchdv1.ConnectRequest
 	sentMessages []*dispatchdv1.ConnectResponse
 	recvIndex    int
+	failSendAt   int
 }
 
 func (s *fakeWorkerConnectStream) Context() context.Context {
@@ -155,6 +242,9 @@ func (s *fakeWorkerConnectStream) Context() context.Context {
 }
 
 func (s *fakeWorkerConnectStream) Send(response *dispatchdv1.ConnectResponse) error {
+	if s.failSendAt > 0 && len(s.sentMessages)+1 == s.failSendAt {
+		return io.ErrClosedPipe
+	}
 	s.sentMessages = append(s.sentMessages, response)
 	return nil
 }

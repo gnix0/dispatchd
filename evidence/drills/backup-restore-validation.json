@@ -1,0 +1,14 @@
+{
+  "backup_file": "/home/gnix0/developer/dispatchd/evidence/drills/dispatchd_20260412T122904Z.sql",
+  "original": {
+    "jobs": 6196,
+    "executions": 6196,
+    "workers": 14
+  },
+  "restored": {
+    "jobs": 6196,
+    "executions": 6196,
+    "workers": 14
+  },
+  "matched": true
+}

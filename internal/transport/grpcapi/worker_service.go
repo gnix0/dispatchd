@@ -273,6 +273,6 @@ func fromProtoWorkerStatus(status dispatchdv1.WorkerStatus) workers.Status {
 	case dispatchdv1.WorkerStatus_WORKER_STATUS_OFFLINE:
 		return workers.StatusOffline
 	default:
-		return workers.StatusUnspecified
+		return workers.StatusReady
 	}
 }

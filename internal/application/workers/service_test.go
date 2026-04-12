@@ -9,7 +9,8 @@ import (
 
 func TestRegisterNormalizesWorkerAndStoresIt(t *testing.T) {
 	service := NewInMemoryService()
-	service.now = func() time.Time { return time.Date(2026, 4, 9, 19, 0, 0, 0, time.UTC) }
+	now := time.Date(2026, 4, 9, 19, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
 
 	worker, err := service.Register(context.Background(), RegisterInput{
 		WorkerID:       " worker-1 ",
@@ -35,6 +36,10 @@ func TestRegisterNormalizesWorkerAndStoresIt(t *testing.T) {
 
 	if worker.Status != StatusReady {
 		t.Fatalf("expected ready status, got %q", worker.Status)
+	}
+
+	if !worker.LastHeartbeatAt.Equal(now) {
+		t.Fatalf("expected registration to set last heartbeat %s, got %s", now, worker.LastHeartbeatAt)
 	}
 }
 
@@ -76,5 +81,26 @@ func TestHeartbeatRejectsUnknownWorker(t *testing.T) {
 	_, err := service.Heartbeat(context.Background(), HeartbeatInput{WorkerID: "missing"})
 	if !errors.Is(err, ErrWorkerNotFound) {
 		t.Fatalf("expected worker not found, got %v", err)
+	}
+}
+
+func TestHeartbeatDefaultsToReadyWhenStatusIsOmitted(t *testing.T) {
+	service := NewInMemoryService()
+
+	_, err := service.Register(context.Background(), RegisterInput{WorkerID: "worker-1"})
+	if err != nil {
+		t.Fatalf("expected register to succeed, got %v", err)
+	}
+
+	worker, err := service.Heartbeat(context.Background(), HeartbeatInput{
+		WorkerID:           "worker-1",
+		InflightExecutions: 0,
+	})
+	if err != nil {
+		t.Fatalf("expected heartbeat to succeed, got %v", err)
+	}
+
+	if worker.Status != StatusReady {
+		t.Fatalf("expected omitted heartbeat status to default to ready, got %q", worker.Status)
 	}
 }

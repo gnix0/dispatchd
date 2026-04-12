@@ -93,7 +93,7 @@ func (s *InMemoryService) Register(_ context.Context, input RegisterInput) (Work
 		Status:             StatusReady,
 		InflightExecutions: 0,
 		RegisteredAt:       registeredAt,
-		LastHeartbeatAt:    existing.LastHeartbeatAt,
+		LastHeartbeatAt:    now,
 		UpdatedAt:          now,
 	}
 
@@ -163,7 +163,7 @@ func normalizeHeartbeatInput(input HeartbeatInput) (HeartbeatInput, error) {
 	}
 
 	if input.Status == "" {
-		input.Status = StatusUnspecified
+		input.Status = StatusReady
 	}
 
 	return input, nil

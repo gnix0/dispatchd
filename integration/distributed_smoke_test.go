@@ -9,8 +9,8 @@ import (
 
 	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func TestDistributedSubmitAssignCompleteFlow(t *testing.T) {
@@ -202,14 +202,14 @@ func waitForAssignment(messages <-chan *dispatchdv1.ConnectResponse, streamErr <
 func waitForReady(t *testing.T, ctx context.Context, conn *grpc.ClientConn, service string) {
 	t.Helper()
 
-	conn.Connect()
-	for {
-		state := conn.GetState()
-		if state == connectivity.Ready {
+	client := healthpb.NewHealthClient(conn)
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		response, err := client.Check(ctx, &healthpb.HealthCheckRequest{})
+		if err == nil && response.GetStatus() == healthpb.HealthCheckResponse_SERVING {
 			return
 		}
-		if !conn.WaitForStateChange(ctx, state) {
-			t.Fatalf("%s connection did not become ready before deadline", service)
-		}
+		time.Sleep(200 * time.Millisecond)
 	}
+	t.Fatalf("%s connection did not become ready before deadline", service)
 }

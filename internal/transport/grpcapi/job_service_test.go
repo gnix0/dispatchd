@@ -109,3 +109,16 @@ func TestListExecutionsReturnsPersistedExecution(t *testing.T) {
 		t.Fatalf("expected queued execution status, got %v", listResponse.GetExecutions()[0].GetStatus())
 	}
 }
+
+func TestSubmitJobInPassiveRegionMapsToFailedPrecondition(t *testing.T) {
+	jobApplication := jobs.NewRegionalService(jobs.NewInMemoryService(), "region-b", "region-a", false)
+	service := &JobService{jobApplication: jobApplication}
+
+	_, err := service.SubmitJob(context.Background(), &dispatchdv1.SubmitJobRequest{
+		JobType: "email.send",
+		Payload: []byte("payload"),
+	})
+	if status.Code(err) != codes.FailedPrecondition {
+		t.Fatalf("expected FailedPrecondition, got %v", status.Code(err))
+	}
+}

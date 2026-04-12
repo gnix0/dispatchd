@@ -11,8 +11,8 @@ IMAGE_TAG ?= dev
 	compose-config compose-up compose-down k8s-render k8s-validate argocd-render \
 	k8s-render-staging k8s-render-prod \
 	kind-up kind-down gitops-update-dev backup-postgres restore-postgres failover-smoke \
-	perf-stack-up perf-stack-down perf-k6-smoke perf-k6-average perf-k6-stress \
-	perf-worker-smoke perf-worker-average perf-worker-stress
+	validate-backup-restore perf-stack-up perf-stack-down perf-k6-smoke perf-k6-average perf-k6-stress \
+	perf-worker-smoke perf-worker-average perf-worker-stress perf-e2e-smoke perf-e2e-average
 
 fmt:
 	go fmt ./...
@@ -89,6 +89,9 @@ restore-postgres:
 failover-smoke:
 	./scripts/failover-smoke.sh
 
+validate-backup-restore:
+	./scripts/validate-backup-restore.sh
+
 perf-stack-up:
 	docker compose up --build -d
 
@@ -112,3 +115,9 @@ perf-worker-average:
 
 perf-worker-stress:
 	./scripts/perf-worker-load.sh stress
+
+perf-e2e-smoke:
+	./scripts/perf-e2e.sh smoke
+
+perf-e2e-average:
+	./scripts/perf-e2e.sh average
