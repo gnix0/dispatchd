@@ -131,8 +131,10 @@ Security-relevant role mapping is:
 ### Argo CD
 
 - [deploy/argocd/dev-application.yaml](/home/gnix0/developer/dispatchd/deploy/argocd/dev-application.yaml) defines the dev `Application`
+- [deploy/argocd/prod-region-a-application.yaml](/home/gnix0/developer/dispatchd/deploy/argocd/prod-region-a-application.yaml) defines the primary production-region application
+- [deploy/argocd/prod-region-b-application.yaml](/home/gnix0/developer/dispatchd/deploy/argocd/prod-region-b-application.yaml) defines the passive production-region application
 - [deploy/argocd/project.yaml](/home/gnix0/developer/dispatchd/deploy/argocd/project.yaml) defines the Argo CD project boundaries
-- Argo CD targets the `deploy/overlays/dev` path and can self-heal and prune once the repo is connected
+- Argo CD targets the `deploy/overlays/dev`, `deploy/overlays/prod-region-a`, and `deploy/overlays/prod-region-b` paths and can self-heal and prune once the repo is connected
 
 If you fork or rename the repository, update the Argo CD `repoURL` fields to match the canonical Git URL for your deployment source.
 
@@ -145,16 +147,21 @@ If you fork or rename the repository, update the Argo CD `repoURL` fields to mat
 
 ## High Availability And DR
 
-The repository now carries HA/DR-oriented operational assets:
+The repository includes active/passive region controls and explicit DR validation assets:
 
 - scheduler leadership is coordinated through Redis so only one active scheduler instance reconciles work per region
 - staging and production Kustomize overlays separate promotion targets from development
 - production region overlays model active/passive control-plane and scheduler ownership through [prod-region-a](/home/gnix0/developer/dispatchd/deploy/overlays/prod-region-a) and [prod-region-b](/home/gnix0/developer/dispatchd/deploy/overlays/prod-region-b)
 - production PodDisruptionBudgets keep the core services available during voluntary disruptions
-- Postgres backup and restore helpers live in [backup-postgres.sh](/home/gnix0/developer/dispatchd/scripts/backup-postgres.sh) and [restore-postgres.sh](/home/gnix0/developer/dispatchd/scripts/restore-postgres.sh)
+- backup and restore helpers live in [backup-postgres.sh](/home/gnix0/developer/dispatchd/scripts/backup-postgres.sh), [restore-postgres.sh](/home/gnix0/developer/dispatchd/scripts/restore-postgres.sh), and [validate-backup-restore.sh](/home/gnix0/developer/dispatchd/scripts/validate-backup-restore.sh)
 - a scheduler restart drill lives in [failover-smoke.sh](/home/gnix0/developer/dispatchd/scripts/failover-smoke.sh)
 
 The region model is active/passive: only the primary region allows mutable orchestration work, while the passive region stays read-only until promoted.
+
+Measured drill results:
+
+- scheduler restart drill: `20/20` jobs succeeded after a live scheduler restart; `submit_to_succeeded p95 2513.668 ms`; evidence in [scheduler-restart-drill.json](/home/gnix0/developer/dispatchd/evidence/drills/scheduler-restart-drill.json)
+- backup/restore validation: restored counts matched the live snapshot exactly for jobs, executions, and workers; evidence in [backup-restore-validation.json](/home/gnix0/developer/dispatchd/evidence/drills/backup-restore-validation.json)
 
 ## Performance & Reliability
 
@@ -165,29 +172,34 @@ The repository includes a Dockerized performance and observability workflow buil
 - Jaeger trace collection through OTLP
 - `k6` gRPC load generation for the control-plane unary path
 - a dedicated `perf-worker` load client for worker registration and heartbeat pressure
+- a dedicated [perf-e2e](/home/gnix0/developer/dispatchd/cmd/perf-e2e/main.go) driver for submit-to-claim and submit-to-succeeded measurements
 
-Reference evidence for the current branch lives under [assets/perf](/home/gnix0/developer/dispatchd/assets/perf) and [perf/results](/home/gnix0/developer/dispatchd/perf/results).
+Reference evidence lives under [assets/perf](/home/gnix0/developer/dispatchd/assets/perf), [evidence/performance](/home/gnix0/developer/dispatchd/evidence/performance), and [evidence/drills](/home/gnix0/developer/dispatchd/evidence/drills).
 
-Supported SLOs for the current evidence set:
+SLOs:
 
 - control-plane unary gRPC availability: `>= 99.9%`
 - control-plane unary gRPC latency: `p95 < 50 ms` in the reference Docker Compose environment
 - worker heartbeat acknowledgement latency: `p95 < 50 ms`
 - worker heartbeat error rate: `< 0.1%`
+- end-to-end submit-to-succeeded latency: `p95 < 7 s` on the average reference-compose run
+- scheduler restart drill latency: `p95 < 3 s` for the post-restart smoke run
+- backup/restore validation integrity: restored job, execution, and worker counts match the source snapshot exactly
 
-Measured SLIs from the captured runs:
+Measured SLIs:
 
-- control-plane smoke run: `5548` iterations, `100%` checks passed, `grpc_req_duration avg 5.16 ms`, `p95 13.30 ms`
-- control-plane stress run: `266330` iterations, `100%` checks passed, `443.81 iterations/s`, `grpc_req_duration avg 16.71 ms`, `p95 43.74 ms`
-- worker heartbeat smoke run: `180` heartbeats, `0` errors, `avg ack 9.67 ms`, `p95 12.85 ms`, `p99 14.33 ms`
-- worker heartbeat stress run: `112801` heartbeats, `0` errors, `avg ack 10.34 ms`, `p95 28.27 ms`, `p99 54.04 ms`
+- control-plane unary smoke: `5772` iterations, `23088/23088` checks passed, `192.05 iterations/s`, `grpc_req_duration avg 4.15 ms`, `p95 10.28 ms`; evidence in [control-plane-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/control-plane-smoke.json)
+- worker heartbeat smoke: `180` heartbeats, `0` errors, `avg ack 10.37 ms`, `p95 20.451 ms`, `p99 22.555 ms`; evidence in [worker-heartbeats-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/worker-heartbeats-smoke.json)
+- end-to-end smoke: `20/20` jobs succeeded, `submit_to_claim p95 1474.958 ms`, `submit_to_succeeded p95 1577.84 ms`; evidence in [end-to-end-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/end-to-end-smoke.json)
+- end-to-end average: `80/80` jobs succeeded, `submit_to_claim p95 6200.305 ms`, `submit_to_succeeded p95 6201.945 ms`; evidence in [end-to-end-average.json](/home/gnix0/developer/dispatchd/evidence/performance/end-to-end-average.json)
+- scheduler restart drill: `20/20` jobs succeeded after restart, `submit_to_claim p95 2511.935 ms`, `submit_to_succeeded p95 2513.668 ms`; evidence in [scheduler-restart-drill.json](/home/gnix0/developer/dispatchd/evidence/drills/scheduler-restart-drill.json)
+- backup/restore validation: source and restored counts matched exactly at `jobs=6196`, `executions=6196`, `workers=14`; evidence in [backup-restore-validation.json](/home/gnix0/developer/dispatchd/evidence/drills/backup-restore-validation.json)
 
-Evidence currently checked into the repository includes:
+Evidence:
 
 - Grafana request-rate and latency captures such as [grafana_grpc_req_rate.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_grpc_req_rate.png) and [grafana_grpc_p95_latency.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_grpc_p95_latency.png)
 - worker and scheduler activity captures such as [grafana_worker_stream_events.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_worker_stream_events.png), [grafana_dispatch_events.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_dispatch_events.png), and [grafana_scheduler_ticks_avg_duration.png](/home/gnix0/developer/dispatchd/assets/perf/grafana_scheduler_ticks_avg_duration.png)
-
-The currently published SLI set is intentionally limited to the portions of the system that were directly measured in the checked-in evidence. It does not claim submit-to-assignment latency, end-to-end execution latency, or retry/dead-letter timing because those were not benchmarked explicitly in this evidence set.
+- JSON benchmark and drill summaries under [evidence/performance](/home/gnix0/developer/dispatchd/evidence/performance) and [evidence/drills](/home/gnix0/developer/dispatchd/evidence/drills)
 
 ## DevSecOps
 
@@ -249,6 +261,7 @@ make compose-up
 make compose-down
 make backup-postgres
 make failover-smoke
+make validate-backup-restore
 ```
 
 Observability and performance workflows:
@@ -257,6 +270,8 @@ Observability and performance workflows:
 make perf-stack-up
 make perf-k6-smoke
 make perf-worker-smoke
+make perf-e2e-smoke
+make perf-e2e-average
 make perf-stack-down
 ```
 

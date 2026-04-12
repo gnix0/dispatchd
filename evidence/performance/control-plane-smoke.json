@@ -1,0 +1,83 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "submit status ok": {
+                    "id": "6e1e9d5a715d41b562e94b2e9ae32cd3",
+                    "passes": 5772,
+                    "fails": 0,
+                    "name": "submit status ok",
+                    "path": "::submit status ok"
+                },
+                "submit returned job": {
+                    "name": "submit returned job",
+                    "path": "::submit returned job",
+                    "id": "fd9521dd7618f5a40aeab6793ac9bdcf",
+                    "passes": 5772,
+                    "fails": 0
+                },
+                "get status ok": {
+                    "name": "get status ok",
+                    "path": "::get status ok",
+                    "id": "85d41b291f8caebafc324a99a97ec92b",
+                    "passes": 5772,
+                    "fails": 0
+                },
+                "get echoes job": {
+                    "id": "b6ec14c657b5d3bc761cb41d4abb31c6",
+                    "passes": 5772,
+                    "fails": 0,
+                    "name": "get echoes job",
+                    "path": "::get echoes job"
+                }
+            },
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "data_sent": {
+            "count": 2384850,
+            "rate": 79353.3642829555
+        },
+        "data_received": {
+            "count": 2684748,
+            "rate": 89332.15340668647
+        },
+        "iteration_duration": {
+            "p(90)": 70.8852426,
+            "p(95)": 74.9391218,
+            "avg": 62.372763490991005,
+            "min": 53.477243,
+            "med": 60.920184000000006,
+            "max": 231.079789
+        },
+        "iterations": {
+            "count": 5772,
+            "rate": 192.05720218932814
+        },
+        "vus": {
+            "value": 12,
+            "min": 12,
+            "max": 12
+        },
+        "vus_max": {
+            "value": 12,
+            "min": 12,
+            "max": 12
+        },
+        "grpc_req_duration": {
+            "med": 3.125342,
+            "max": 175.656195,
+            "p(90)": 8.166441,
+            "p(95)": 10.28369535,
+            "avg": 4.151251007189879,
+            "min": 0.422869
+        },
+        "checks": {
+            "passes": 23088,
+            "fails": 0,
+            "value": 1
+        }
+    }
+}

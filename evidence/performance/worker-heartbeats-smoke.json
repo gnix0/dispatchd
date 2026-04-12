@@ -1,0 +1,18 @@
+{
+  "profile": "smoke",
+  "target": "127.0.0.1:8081",
+  "workers": 12,
+  "duration_seconds": 30,
+  "heartbeat_interval": "2s",
+  "started_at": "2026-04-12T12:29:48.176091069Z",
+  "finished_at": "2026-04-12T12:30:18.355445374Z",
+  "registrations": 12,
+  "heartbeats_sent": 180,
+  "assignments_seen": 0,
+  "errors": 0,
+  "avg_ack_latency_ms": 10.376733333333334,
+  "p50_ack_latency_ms": 10.266,
+  "p95_ack_latency_ms": 20.451,
+  "p99_ack_latency_ms": 22.555,
+  "max_ack_latency_ms": 26.577
+}

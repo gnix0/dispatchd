@@ -334,6 +334,20 @@ func TestValidateAllowsDevelopmentDefaults(t *testing.T) {
 	}
 }
 
+func TestValidateAllowsComposeDefaults(t *testing.T) {
+	service := Service{
+		Name:            "control-plane",
+		Environment:     "compose",
+		AuthEnabled:     false,
+		TLSEnabled:      false,
+		AuditLogEnabled: true,
+	}
+
+	if err := service.Validate(); err != nil {
+		t.Fatalf("expected compose config to validate, got %v", err)
+	}
+}
+
 func TestValidateAllowsSchedulerWithNonDevSecurityControls(t *testing.T) {
 	service := Service{
 		Name:                    "scheduler",

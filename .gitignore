@@ -8,3 +8,4 @@ coverage.out
 .env.*
 perf/results/*.json
 perf/results/*.txt
+evidence/drills/*.sql

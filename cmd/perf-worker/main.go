@@ -13,8 +13,8 @@ import (
 
 	dispatchdv1 "github.com/gnix0/dispatchd/gen/go/dispatchd/v1"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type summary struct {
@@ -223,20 +223,19 @@ func waitForAck(stream dispatchdv1.WorkerService_ConnectClient, workerID string)
 }
 
 func waitForReady(ctx context.Context, conn *grpc.ClientConn) error {
-	for {
-		switch conn.GetState() {
-		case connectivity.Ready:
+	client := healthpb.NewHealthClient(conn)
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		response, err := client.Check(ctx, &healthpb.HealthCheckRequest{})
+		if err == nil && response.GetStatus() == healthpb.HealthCheckResponse_SERVING {
 			return nil
-		case connectivity.Idle:
-			conn.Connect()
-		case connectivity.Shutdown:
-			return errors.New("gRPC connection shut down before reaching ready state")
 		}
-
-		if !conn.WaitForStateChange(ctx, conn.GetState()) {
-			return ctx.Err()
-		}
+		time.Sleep(200 * time.Millisecond)
 	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return errors.New("gRPC connection did not report serving health before deadline")
 }
 
 func summarizeLatencies(aggregate *summary, latencies []float64) {

@@ -287,7 +287,7 @@ func scopeRegionKey(base, region string) string {
 
 func (s Service) enforcesNonDevSecurity() bool {
 	switch strings.ToLower(strings.TrimSpace(s.Environment)) {
-	case "", "development", "development-kind", "dev", "local", "kubernetes", "test":
+	case "", "development", "development-kind", "dev", "local", "compose", "kubernetes", "test":
 		return false
 	default:
 		return true
