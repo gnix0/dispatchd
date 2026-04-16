@@ -108,7 +108,7 @@ jobs:
         run: docker pull aquasec/trivy:0.65.0
 
       - name: Build local image for scanning
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           build-args: |
