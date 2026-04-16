@@ -117,7 +117,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: "ci.yml",
-              ref: "${{ steps.cpr.outputs.pull-request-branch }}"
+              ref: "gitops/update-dev-images-${{ steps.tag.outputs.value }}"
             });
 
       - name: Trigger security workflow for GitOps PR branch
@@ -129,5 +129,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: "security.yml",
-              ref: "${{ steps.cpr.outputs.pull-request-branch }}"
+              ref: "gitops/update-dev-images-${{ steps.tag.outputs.value }}"
             });
