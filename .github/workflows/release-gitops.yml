@@ -15,6 +15,7 @@ permissions:
   contents: write
   packages: write
   pull-requests: write
+  actions: write
 
 jobs:
   publish-images:
@@ -92,6 +93,7 @@ jobs:
         run: ./scripts/update-dev-image-tags.sh "${{ steps.tag.outputs.value }}"
 
       - name: Create GitOps pull request
+        id: cpr
         uses: peter-evans/create-pull-request@v8
         with:
           branch: gitops/update-dev-images-${{ steps.tag.outputs.value }}
@@ -105,3 +107,27 @@ jobs:
           labels: |
             gitops
             deployment
+
+      - name: Trigger quality workflow for GitOps PR branch
+        if: ${{ steps.cpr.outputs.pull-request-number != '' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "ci.yml",
+              ref: "gitops/update-dev-images-${{ steps.tag.outputs.value }}"
+            });
+
+      - name: Trigger security workflow for GitOps PR branch
+        if: ${{ steps.cpr.outputs.pull-request-number != '' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "security.yml",
+              ref: "gitops/update-dev-images-${{ steps.tag.outputs.value }}"
+            });
