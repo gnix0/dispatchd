@@ -1,5 +1,7 @@
 # dispatchd
 
+[![quality](https://github.com/gnix0/dispatchd/actions/workflows/ci.yml/badge.svg)](https://github.com/gnix0/dispatchd/actions/workflows/ci.yml)
+
 Distributed task orchestration platform in Go built around gRPC contracts, shared Postgres and Redis state, Kustomize-based GitOps delivery, and an Argo CD deployment path.
 
 ## Versioning
