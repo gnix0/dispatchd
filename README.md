@@ -185,7 +185,7 @@ SLOs:
 - control-plane unary gRPC latency: `p95 < 50 ms` in the reference Docker Compose environment
 - worker heartbeat acknowledgement latency: `p95 < 50 ms`
 - worker heartbeat error rate: `< 0.1%`
-- end-to-end submit-to-succeeded latency: `p95 < 7 s` on the average reference-compose run
+- end-to-end submit-to-succeeded latency: `p95 < 1 s` on the average reference-compose run
 - scheduler restart drill latency: `p95 < 3 s` for the post-restart smoke run
 - backup/restore validation integrity: restored job, execution, and worker counts match the source snapshot exactly
 
@@ -193,8 +193,8 @@ Measured SLIs:
 
 - control-plane unary smoke: `5772` iterations, `23088/23088` checks passed, `192.05 iterations/s`, `grpc_req_duration avg 4.15 ms`, `p95 10.28 ms`; evidence in [control-plane-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/control-plane-smoke.json)
 - worker heartbeat smoke: `180` heartbeats, `0` errors, `avg ack 10.37 ms`, `p95 20.451 ms`, `p99 22.555 ms`; evidence in [worker-heartbeats-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/worker-heartbeats-smoke.json)
-- end-to-end smoke: `20/20` jobs succeeded, `submit_to_claim p95 1474.958 ms`, `submit_to_succeeded p95 1577.84 ms`; evidence in [end-to-end-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/end-to-end-smoke.json)
-- end-to-end average: `80/80` jobs succeeded, `submit_to_claim p95 6200.305 ms`, `submit_to_succeeded p95 6201.945 ms`; evidence in [end-to-end-average.json](/home/gnix0/developer/dispatchd/evidence/performance/end-to-end-average.json)
+- end-to-end smoke: `20/20` jobs succeeded, `submit_to_claim p95 550.619 ms`, `submit_to_succeeded p95 552.521 ms`; evidence in [end-to-end-smoke.json](/home/gnix0/developer/dispatchd/evidence/performance/end-to-end-smoke.json)
+- end-to-end average: `80/80` jobs succeeded, `submit_to_claim p95 525.89 ms`, `submit_to_succeeded p95 529.546 ms`; evidence in [end-to-end-average.json](/home/gnix0/developer/dispatchd/evidence/performance/end-to-end-average.json)
 - scheduler restart drill: `20/20` jobs succeeded after restart, `submit_to_claim p95 2511.935 ms`, `submit_to_succeeded p95 2513.668 ms`; evidence in [scheduler-restart-drill.json](/home/gnix0/developer/dispatchd/evidence/drills/scheduler-restart-drill.json)
 - backup/restore validation: source and restored counts matched exactly at `jobs=6196`, `executions=6196`, `workers=14`; evidence in [backup-restore-validation.json](/home/gnix0/developer/dispatchd/evidence/drills/backup-restore-validation.json)
 

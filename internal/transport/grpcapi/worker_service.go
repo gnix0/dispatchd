@@ -37,6 +37,7 @@ func RegisterWorkerGateway(workerApplication workers.Service, dispatchService jo
 
 func (s *WorkerService) Connect(stream dispatchdv1.WorkerService_ConnectServer) (err error) {
 	var streamWorkerID string
+	var streamWorker workers.Worker
 	started := time.Now()
 	ctx, span := observability.StartSpan(stream.Context(), "worker_gateway.connect")
 	defer func() {
@@ -73,6 +74,7 @@ func (s *WorkerService) Connect(stream dispatchdv1.WorkerService_ConnectServer) 
 				}
 
 				streamWorkerID = worker.ID
+				streamWorker = worker
 				if err := stream.Send(newWorkerAck(worker.ID, "worker registered")); err != nil {
 					return err
 				}
@@ -111,6 +113,7 @@ func (s *WorkerService) Connect(stream dispatchdv1.WorkerService_ConnectServer) 
 				observability.RecordDispatchEvent("lease_renewal", nil)
 
 				streamWorkerID = worker.ID
+				streamWorker = worker
 				if err := stream.Send(newWorkerAck(worker.ID, "heartbeat accepted")); err != nil {
 					return err
 				}
@@ -157,7 +160,13 @@ func (s *WorkerService) Connect(stream dispatchdv1.WorkerService_ConnectServer) 
 					}
 					observability.RecordDispatchEvent("fail_execution", nil)
 				}
-				return stream.Send(newExecutionAck(payload.Result.GetExecutionId(), workerID, "result accepted"))
+				if err := stream.Send(newExecutionAck(payload.Result.GetExecutionId(), workerID, "result accepted")); err != nil {
+					return err
+				}
+				if streamWorker.ID == "" {
+					return nil
+				}
+				return s.sendAssignmentSlots(stream, streamWorker, 1)
 			}()
 			eventSpan.End()
 			observability.RecordWorkerEvent("result", eventErr)
@@ -213,6 +222,10 @@ func newExecutionAck(executionID, workerID, message string) *dispatchdv1.Connect
 
 func (s *WorkerService) sendAssignments(stream dispatchdv1.WorkerService_ConnectServer, worker workers.Worker) error {
 	availableSlots := int(worker.MaxConcurrency - worker.InflightExecutions)
+	return s.sendAssignmentSlots(stream, worker, availableSlots)
+}
+
+func (s *WorkerService) sendAssignmentSlots(stream dispatchdv1.WorkerService_ConnectServer, worker workers.Worker, availableSlots int) error {
 	if availableSlots <= 0 || worker.Status == workers.StatusDraining || worker.Status == workers.StatusOffline {
 		return nil
 	}

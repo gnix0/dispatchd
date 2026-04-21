@@ -161,6 +161,70 @@ func TestConnectAcceptsTaskResult(t *testing.T) {
 	}
 }
 
+func TestConnectRefillsOneAssignmentAfterTaskResult(t *testing.T) {
+	dispatcher := &fakeDispatchService{
+		assignments: []*jobs.Assignment{
+			{
+				ExecutionID: "exec-1",
+				JobType:     "email.send",
+				Payload:     []byte("payload-1"),
+				Attempt:     1,
+			},
+			{
+				ExecutionID: "exec-2",
+				JobType:     "email.send",
+				Payload:     []byte("payload-2"),
+				Attempt:     1,
+			},
+		},
+	}
+	service := &WorkerService{
+		workerApplication: workers.NewInMemoryService(),
+		dispatchService:   dispatcher,
+		leaseDuration:     30 * time.Second,
+	}
+	stream := &fakeWorkerConnectStream{
+		ctx: context.Background(),
+		recvMessages: []*dispatchdv1.ConnectRequest{
+			{
+				Payload: &dispatchdv1.ConnectRequest_Registration{
+					Registration: &dispatchdv1.WorkerRegistration{
+						WorkerId:       "worker-1",
+						Capabilities:   []string{"email"},
+						MaxConcurrency: 1,
+					},
+				},
+			},
+			{
+				Payload: &dispatchdv1.ConnectRequest_Result{
+					Result: &dispatchdv1.TaskResult{ExecutionId: "exec-1", Success: true},
+				},
+			},
+		},
+	}
+
+	err := service.Connect(stream)
+	if err != nil {
+		t.Fatalf("expected stream to succeed, got %v", err)
+	}
+
+	if dispatcher.claimCalls != 2 {
+		t.Fatalf("expected exactly 2 assignment claims, got %d", dispatcher.claimCalls)
+	}
+	if dispatcher.completedExecutionID != "exec-1" {
+		t.Fatalf("expected completed execution exec-1, got %q", dispatcher.completedExecutionID)
+	}
+	if len(stream.sentMessages) != 4 {
+		t.Fatalf("expected ack, assignment, result ack, refill assignment; got %d messages", len(stream.sentMessages))
+	}
+	if stream.sentMessages[1].GetAssignment().GetExecutionId() != "exec-1" {
+		t.Fatalf("expected first assignment exec-1, got %#v", stream.sentMessages[1])
+	}
+	if stream.sentMessages[3].GetAssignment().GetExecutionId() != "exec-2" {
+		t.Fatalf("expected refill assignment exec-2, got %#v", stream.sentMessages[3])
+	}
+}
+
 func TestConnectReleasesAssignmentWhenDeliveryFails(t *testing.T) {
 	dispatcher := &fakeDispatchService{
 		assignment: &jobs.Assignment{
@@ -204,9 +268,17 @@ type fakeDispatchService struct {
 	completedExecutionID string
 	releasedExecutionID  string
 	assignment           *jobs.Assignment
+	assignments          []*jobs.Assignment
+	claimCalls           int
 }
 
 func (f *fakeDispatchService) ClaimNextForWorker(context.Context, jobs.ClaimForWorkerInput, time.Duration) (*jobs.Assignment, error) {
+	f.claimCalls++
+	if len(f.assignments) > 0 {
+		assignment := f.assignments[0]
+		f.assignments = f.assignments[1:]
+		return assignment, nil
+	}
 	return f.assignment, nil
 }
 
