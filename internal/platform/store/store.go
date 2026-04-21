@@ -183,6 +183,8 @@ func (s *Store) SubmitJob(ctx context.Context, input jobs.SubmitJobInput) (jobs.
 		return jobs.Job{}, fmt.Errorf("commit submit tx: %w", err)
 	}
 
+	_, _ = s.enqueueReadyExecution(ctx, execution.ID, job.JobType, now)
+
 	return job, nil
 }
 
@@ -379,46 +381,54 @@ func (s *Store) EnqueueRunnableExecutions(ctx context.Context, limit int) (int, 
 		limit = 256
 	}
 
+	type readyCandidate struct {
+		executionID string
+		jobType     string
+	}
+
 	now := time.Now().UTC()
 	rows, err := s.pg.Query(ctx, `
-		WITH candidate AS (
-		  SELECT e.id, j.job_type
-		  FROM executions e
-		  JOIN jobs j ON j.id = e.job_id
-		  WHERE e.status = $1
-		    AND e.available_at <= $2
-		    AND e.enqueued_at IS NULL
-		    AND j.status = $3
-		  ORDER BY j.priority DESC, e.available_at ASC, j.created_at ASC, e.attempt ASC
-		  LIMIT $4
-		), updated AS (
-		  UPDATE executions e
-		  SET enqueued_at = $2, updated_at = $2
-		  FROM candidate c
-		  WHERE e.id = c.id
-		  RETURNING e.id, c.job_type
-		)
-		SELECT id, job_type FROM updated
+		SELECT e.id, j.job_type
+		FROM executions e
+		JOIN jobs j ON j.id = e.job_id
+		WHERE e.status = $1
+		  AND e.available_at <= $2
+		  AND e.enqueued_at IS NULL
+		  AND j.status = $3
+		ORDER BY j.priority DESC, e.available_at ASC, j.created_at ASC, e.attempt ASC
+		LIMIT $4
 	`, jobs.ExecutionStatusQueued, now, string(jobs.StatusPending), limit)
 	if err != nil {
 		return 0, fmt.Errorf("enqueue runnable executions: %w", err)
 	}
-	defer rows.Close()
 
-	count := 0
+	candidates := make([]readyCandidate, 0, limit)
 	for rows.Next() {
-		var executionID string
-		var jobType string
-		if err := rows.Scan(&executionID, &jobType); err != nil {
+		var candidate readyCandidate
+		if err := rows.Scan(&candidate.executionID, &candidate.jobType); err != nil {
+			rows.Close()
 			return 0, fmt.Errorf("scan runnable execution: %w", err)
 		}
-		if err := s.redis.RPush(ctx, s.readyQueueKey(jobType), executionID).Err(); err != nil {
-			return 0, fmt.Errorf("push execution to redis: %w", err)
+		candidates = append(candidates, candidate)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return 0, err
+	}
+	rows.Close()
+
+	count := 0
+	for _, candidate := range candidates {
+		enqueued, err := s.enqueueReadyExecution(ctx, candidate.executionID, candidate.jobType, now)
+		if err != nil {
+			return 0, err
 		}
-		count++
+		if enqueued {
+			count++
+		}
 	}
 
-	return count, rows.Err()
+	return count, nil
 }
 
 func (s *Store) ClaimNextForWorker(ctx context.Context, input jobs.ClaimForWorkerInput, leaseDuration time.Duration) (*jobs.Assignment, error) {
@@ -625,7 +635,7 @@ func (s *Store) FailExecution(ctx context.Context, input jobs.FailExecutionInput
 			INSERT INTO executions (
 			  id, job_id, attempt, status, worker_id, error_message,
 			  available_at, enqueued_at, result_metadata, created_at, updated_at
-			) VALUES ($1, $2, $3, $4, '', '', $5, $6, '{}'::jsonb, $6, $6)
+			) VALUES ($1, $2, $3, $4, '', '', $5, NULL, '{}'::jsonb, $6, $6)
 		`, nextExecution.ID, nextExecution.JobID, nextExecution.Attempt, nextExecution.Status, nextExecution.AvailableAt, now)
 		if err != nil {
 			return jobs.Execution{}, nil, jobs.Job{}, fmt.Errorf("insert retry execution: %w", err)
@@ -646,9 +656,7 @@ func (s *Store) FailExecution(ctx context.Context, input jobs.FailExecutionInput
 	}
 
 	if nextExecution != nil {
-		if err := s.redis.RPush(ctx, s.readyQueueKey(job.JobType), nextExecution.ID).Err(); err != nil {
-			return jobs.Execution{}, nil, jobs.Job{}, fmt.Errorf("enqueue retry execution: %w", err)
-		}
+		_, _ = s.enqueueReadyExecution(ctx, nextExecution.ID, job.JobType, now)
 	}
 
 	return execution, nextExecution, job, nil
@@ -694,7 +702,7 @@ func (s *Store) ReleaseExecution(ctx context.Context, executionID, reason string
 		    started_at = NULL,
 		    lease_expires_at = NULL,
 		    available_at = $4,
-		    enqueued_at = $4,
+		    enqueued_at = NULL,
 		    updated_at = $4
 		WHERE id = $1
 	`, execution.ID, jobs.ExecutionStatusQueued, trimmedReason, now)
@@ -715,9 +723,7 @@ func (s *Store) ReleaseExecution(ctx context.Context, executionID, reason string
 		return fmt.Errorf("commit release tx: %w", err)
 	}
 
-	if err := s.redis.RPush(ctx, s.readyQueueKey(job.JobType), execution.ID).Err(); err != nil {
-		return fmt.Errorf("requeue released execution: %w", err)
-	}
+	_, _ = s.enqueueReadyExecution(ctx, execution.ID, job.JobType, now)
 
 	return nil
 }
@@ -1023,6 +1029,31 @@ func scanWorker(row pgx.Row) (workers.Worker, error) {
 
 func (s *Store) readyQueueKey(jobType string) string {
 	return s.capabilityQueueKey(jobNamespace(jobType))
+}
+
+func (s *Store) enqueueReadyExecution(ctx context.Context, executionID, jobType string, enqueuedAt time.Time) (bool, error) {
+	queueKey := s.readyQueueKey(jobType)
+	if err := s.redis.RPush(ctx, queueKey, executionID).Err(); err != nil {
+		return false, fmt.Errorf("push execution to redis: %w", err)
+	}
+
+	result, err := s.pg.Exec(ctx, `
+		UPDATE executions
+		SET enqueued_at = $2, updated_at = $2
+		WHERE id = $1 AND status = $3 AND enqueued_at IS NULL
+	`, executionID, enqueuedAt, jobs.ExecutionStatusQueued)
+	if err != nil {
+		return false, fmt.Errorf("mark execution enqueued: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		if err := s.redis.LRem(ctx, queueKey, 1, executionID).Err(); err != nil {
+			return false, fmt.Errorf("remove stale ready queue entry: %w", err)
+		}
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (s *Store) capabilityQueueKey(capability string) string {
